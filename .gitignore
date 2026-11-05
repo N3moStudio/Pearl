@@ -1,0 +1,23 @@
+# Build products and local IDE state for future implementation
+.DS_Store
+Thumbs.db
+.build/
+build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+*.ipa
+*.xcarchive/
+
+# Signing material, credentials, personal media, local research downloads
+.env
+.env.*
+!.env.example
+*.p12
+*.p8
+*.mobileprovision
+*.cer
+private/
+personal-media/
+research/evidence/
+*.log

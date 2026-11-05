@@ -7,6 +7,14 @@ xcodegen generate
 run_build() {
   local log="$1"
   shift
+  if pgrep -lx xcodebuild > "${log%.log}-processes.log"; then
+    cat "${log%.log}-processes.log"
+    echo 'An existing Xcode build needs review before starting another.'
+    return 1
+  else
+    local inventory_status=$?
+    [[ "$inventory_status" == 1 ]] || return "$inventory_status"
+  fi
   if ! "$@" > "$log" 2>&1; then
     grep -E -A 5 'error:|failed|FAIL|warning:' "$log" | tail -120 || tail -80 "$log"
     return 1
@@ -37,6 +45,7 @@ xcrun simctl privacy "$udid" grant photos com.n3mostudio.pearl
 test_status=0
 run_build build/ui-tests.log xcodebuild -project Pearl.xcodeproj -scheme Pearl -configuration Debug \
   -destination "platform=iOS Simulator,id=$udid" -derivedDataPath build/Simulator \
+  -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1 \
   -resultBundlePath build/UI.xcresult test-without-building || test_status=$?
 xcrun xcresulttool export attachments --path build/UI.xcresult --output-path build/screenshots
 exit "$test_status"

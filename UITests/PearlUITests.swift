@@ -6,7 +6,7 @@ final class PearlUITests: XCTestCase {
     @MainActor func testLargeTextAndDarkAppearance() {
         let app = XCUIApplication()
         app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL", "--ui-test-dark"]
-        app.launch()
+        launchReady(app)
         XCTAssertTrue(app.navigationBars["Pearl"].waitForExistence(timeout: 20))
         XCTAssertTrue(app.tabBars.buttons["Clean Up"].isHittable)
         app.swipeUp()
@@ -14,7 +14,7 @@ final class PearlUITests: XCTestCase {
         screenshot.name = "Pearl-Large-Text-Dark"; screenshot.lifetime = .keepAlways; add(screenshot)
     }
     @MainActor func testLibraryReviewQueue() throws {
-        let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review"]; app.launch()
+        let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review"]; launchReady(app)
         XCTAssertTrue(app.navigationBars["Pearl"].waitForExistence(timeout: 20))
         let library = XCTAttachment(screenshot: app.screenshot()); library.name = "Pearl-Library"; library.lifetime = .keepAlways; add(library)
         app.buttons["mediaPhotos"].tap()
@@ -37,7 +37,7 @@ final class PearlUITests: XCTestCase {
         app.buttons["Done"].tap()
     }
     @MainActor func testLocalPhotoAndVideoScan() {
-        let app = XCUIApplication(); app.launchArguments = ["--ui-test-clear-scan", "--ui-test-reset-review"]; app.launch()
+        let app = XCUIApplication(); app.launchArguments = ["--ui-test-clear-scan", "--ui-test-reset-review"]; launchReady(app)
         XCTAssertTrue(app.navigationBars["Pearl"].waitForExistence(timeout: 20))
         app.tabBars.buttons["Clean Up"].tap()
         app.buttons["scanButton"].tap()
@@ -57,7 +57,7 @@ final class PearlUITests: XCTestCase {
     }
 
     @MainActor func testMonthReviewFavoriteFilmstripAndContinuousSwipe() {
-        let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review"]; app.launch()
+        let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review"]; launchReady(app)
         XCTAssertTrue(app.buttons["openSwipe"].waitForExistence(timeout: 20)); app.buttons["openSwipe"].tap()
         XCTAssertTrue(app.buttons["swipeMonth"].firstMatch.waitForExistence(timeout: 10))
         capture(app, "Pearl-Months")
@@ -90,7 +90,7 @@ final class PearlUITests: XCTestCase {
     }
 
     @MainActor func testVideoPosterPlaybackAndRapidNavigation() {
-        let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review"]; app.launch()
+        let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review"]; launchReady(app)
         XCTAssertTrue(app.buttons["mediaVideos"].waitForExistence(timeout: 20))
         app.buttons["mediaVideos"].tap()
         let item = app.buttons.matching(identifier: "mediaItem").firstMatch
@@ -152,7 +152,7 @@ final class PearlUITests: XCTestCase {
     @MainActor func testScanContinuesAcrossTabsAndRestoresAfterRelaunch() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-test-clear-scan", "--ui-test-slow-scan"]
-        app.launch()
+        launchReady(app)
         XCTAssertTrue(app.tabBars.buttons["Clean Up"].waitForExistence(timeout: 20))
         app.tabBars.buttons["Clean Up"].tap()
         let scan = app.buttons["scanButton"]
@@ -171,7 +171,7 @@ final class PearlUITests: XCTestCase {
         XCTAssertTrue(paused.waitForExistence(timeout: 15))
         waitEnabled(scan, true)
         let saved = progress.label
-        app.terminate(); app.launchArguments = []; app.launch()
+        app.terminate(); app.launchArguments = []; launchReady(app)
         XCTAssertTrue(app.tabBars.buttons["Clean Up"].waitForExistence(timeout: 20)); app.tabBars.buttons["Clean Up"].tap()
         XCTAssertTrue(app.staticTexts["Your place is saved. Ready to resume."].waitForExistence(timeout: 10))
         XCTAssertEqual(app.staticTexts["scanProgress"].label, saved)
@@ -183,7 +183,7 @@ final class PearlUITests: XCTestCase {
 
     @MainActor func testLeavingAppUsesBackgroundGrantOrSavedFallback() {
         let app = XCUIApplication(); app.launchArguments = ["--ui-test-clear-scan", "--ui-test-slow-scan"]
-        app.launch()
+        launchReady(app)
         XCTAssertTrue(app.tabBars.buttons["Clean Up"].waitForExistence(timeout: 20))
         app.tabBars.buttons["Clean Up"].tap(); waitEnabled(app.buttons["scanButton"], true)
         app.buttons["scanButton"].tap()
@@ -201,6 +201,36 @@ final class PearlUITests: XCTestCase {
             XCTAssertTrue(app.staticTexts["Your place is saved. Resume when you return to Pearl."].waitForExistence(timeout: 10))
         }
         print("Pearl background simulator path: \(granted ? "continued processing granted" : "saved fallback")")
+    }
+
+    @MainActor private func launchReady(_ app: XCUIApplication) {
+        app.launch()
+        let access = app.buttons["chooseAccess"]
+        let started = NSPredicate { _, _ in access.exists || app.tabBars.buttons["Home"].exists }
+        let result = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: started, object: app)], timeout: 20)
+        if result != .completed { capture(app, "Pearl-Launch-Failure") }
+        XCTAssertEqual(result, .completed)
+        if access.exists {
+            // A fresh runner may reinstall the app after simctl grants access.
+            // Exercise actual onboarding against synthetic simulator media.
+            for _ in 0..<6 where !access.isHittable { app.swipeUp() }
+            XCTAssertTrue(access.isHittable)
+            access.tap()
+            let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+            let allow = springboard.buttons["Allow Full Access"]
+            let appAllow = app.buttons["Allow Full Access"]
+            let prompt = NSPredicate { _, _ in allow.exists || appAllow.exists || app.tabBars.buttons["Home"].exists }
+            let promptResult = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: prompt, object: app)], timeout: 15)
+            if promptResult != .completed {
+                let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+                screenshot.name = "Pearl-Photo-Permission-Failure"; screenshot.lifetime = .keepAlways; add(screenshot)
+                print(springboard.debugDescription)
+            }
+            XCTAssertEqual(promptResult, .completed)
+            if allow.exists { allow.tap() }
+            else if appAllow.exists { appAllow.tap() }
+        }
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 20))
     }
 
     @MainActor private func waitEnabled(_ element: XCUIElement, _ enabled: Bool) {

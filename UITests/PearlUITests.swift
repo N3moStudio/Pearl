@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 final class PearlUITests: XCTestCase {
     override func setUp() { super.setUp(); continueAfterFailure = false }
@@ -63,6 +64,7 @@ final class PearlUITests: XCTestCase {
         app.buttons["swipeMonth"].firstMatch.tap()
         let favorite = app.buttons["favoriteItem"], remove = app.buttons["stageRemoval"]
         XCTAssertTrue(favorite.waitForExistence(timeout: 10))
+        assertVisibleMedia(app)
         if favorite.label == "Remove from favorites" { favorite.tap(); waitEnabled(remove, true) }
         favorite.tap(); waitEnabled(remove, false)
         XCTAssertEqual(favorite.label, "Remove from favorites")
@@ -71,6 +73,7 @@ final class PearlUITests: XCTestCase {
         let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45))
         start.press(forDuration: 0.1, thenDragTo: start.withOffset(CGVector(dx: 18, dy: 0)))
         XCTAssertEqual(progress.label, before, "A partial drag must not decide")
+        assertVisibleMedia(app)
         capture(app, "Pearl-Fullscreen-Review")
         start.press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.45)))
         waitEnabled(app.buttons["undoReview"], true)
@@ -79,8 +82,71 @@ final class PearlUITests: XCTestCase {
         let second = app.buttons["reviewThumbnail1"]
         XCTAssertTrue(second.exists); second.tap()
         XCTAssertTrue(progress.label.hasPrefix("2 of"))
+        assertVisibleMedia(app)
+        app.buttons["reviewThumbnail0"].tap()
+        assertVisibleMedia(app)
         app.buttons["closeReview"].tap()
         XCTAssertTrue(app.navigationBars["Swipe"].exists)
+    }
+
+    @MainActor func testVideoPosterPlaybackAndRapidNavigation() {
+        let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review"]; app.launch()
+        XCTAssertTrue(app.buttons["mediaVideos"].waitForExistence(timeout: 20))
+        app.buttons["mediaVideos"].tap()
+        let item = app.buttons.matching(identifier: "mediaItem").firstMatch
+        XCTAssertTrue(item.waitForExistence(timeout: 10)); item.tap()
+        let play = app.buttons["playPreview"]
+        XCTAssertTrue(play.waitForExistence(timeout: 10))
+        assertVisibleMedia(app)
+        capture(app, "Pearl-Video-Poster")
+        play.tap()
+        let ready = NSPredicate { _, _ in
+            app.descendants(matching: .any).matching(identifier: "previewVideo").allElementsBoundByIndex
+                .contains { ($0.value as? String) == "Ready" }
+        }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: ready, object: app)], timeout: 25), .completed)
+        assertVisibleMedia(app)
+        capture(app, "Pearl-Video-Playback")
+        app.buttons["reviewThumbnail1"].tap()
+        XCTAssertTrue(play.waitForExistence(timeout: 10))
+        play.tap()
+        app.buttons["reviewThumbnail0"].tap()
+        XCTAssertTrue(play.waitForExistence(timeout: 10), "Navigating away must cancel playback and discard the old player")
+        assertVisibleMedia(app)
+        app.buttons["closeReview"].tap()
+    }
+
+    /// Sample the photo region, excluding chrome/buttons and the filmstrip.
+    /// All generated fixtures have colored landscapes here; a blank black
+    /// player or a spinner must not satisfy the preview regression check.
+    @MainActor private func assertVisibleMedia(_ app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let visible = NSPredicate { _, _ in self.coloredMediaFraction(app) > 0.25 }
+        let result = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: visible, object: app)], timeout: 15)
+        if result != .completed { capture(app, "Pearl-Preview-Failure") }
+        XCTAssertEqual(result, .completed, "Expected a visible colored photo/video, not a black preview", file: file, line: line)
+    }
+
+    @MainActor private func coloredMediaFraction(_ app: XCUIApplication) -> Double {
+        guard let image = app.screenshot().image.cgImage else { return 0 }
+        let rect = CGRect(x: Double(image.width) * 0.15, y: Double(image.height) * 0.32,
+                          width: Double(image.width) * 0.7, height: Double(image.height) * 0.28)
+        guard let crop = image.cropping(to: rect) else { return 0 }
+        let size = 48
+        var pixels = [UInt8](repeating: 0, count: size * size * 4)
+        return pixels.withUnsafeMutableBytes { bytes in
+            guard let context = CGContext(data: bytes.baseAddress, width: size, height: size, bitsPerComponent: 8,
+                bytesPerRow: size * 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue) else { return 0 }
+            context.draw(crop, in: CGRect(x: 0, y: 0, width: CGFloat(size), height: CGFloat(size)))
+            let data = bytes.bindMemory(to: UInt8.self)
+            var colored = 0
+            for offset in stride(from: 0, to: data.count, by: 4) {
+                let high = max(data[offset], data[offset + 1], data[offset + 2])
+                let low = min(data[offset], data[offset + 1], data[offset + 2])
+                if high > 60 && high - low > 18 { colored += 1 }
+            }
+            return Double(colored) / Double(size * size)
+        }
     }
 
     @MainActor func testScanContinuesAcrossTabsAndRestoresAfterRelaunch() {

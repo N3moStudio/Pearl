@@ -10,7 +10,9 @@ permissions:
   contents: read
 jobs:
   build:
-    runs-on: xcode-27
+    # Standard Apple Silicon runner; uses the owner's included private-repo
+    # allowance. No larger runner or automatic paid fallback.
+    runs-on: macos-26
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -65,4 +67,4 @@ jobs:
             build/*.xcresult
             build/screenshots
           if-no-files-found: warn
-          retention-days: 7
+          retention-days: 3

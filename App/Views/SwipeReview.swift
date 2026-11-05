@@ -95,7 +95,7 @@ struct ReviewView: View {
                     .opacity(min(abs(offset.width) / 100, 1)).accessibilityHidden(true)
             }
             ZStack {
-                ReviewMedia(item: item).id(item.id)
+                MediaPreview(item: item).id(item.id)
                     .scaleEffect(zoom * magnification)
                     .offset(x: zoom > 1 ? pan.width + drag.width : 0, y: zoom > 1 ? pan.height + drag.height : 0)
                     .clipped()
@@ -135,11 +135,6 @@ struct ReviewView: View {
             .accessibilityIdentifier("reviewPhoto")
             .accessibilityAction(named: "Keep") { decide(item, remove: false, width: width) }
             .accessibilityAction(named: "Add to removal review") { decide(item, remove: true, width: width) }
-            .contextMenu {
-                Button(model.queue.protected.contains(item.id) ? "Unprotect" : "Protect", systemImage: "lock") {
-                    model.toggleProtection(item.id)
-                }.disabled(item.favorite)
-            }
         }.clipped()
     }
     private var filmstrip: some View {
@@ -186,6 +181,11 @@ struct ReviewView: View {
                 .disabled(leaving || model.favoriting.contains(item.id))
                 .accessibilityLabel(item.favorite ? "Remove from favorites" : "Add to favorites")
                 .accessibilityIdentifier("favoriteItem").sensoryFeedback(.selection, trigger: item.favorite)
+                .contextMenu {
+                    Button(model.queue.protected.contains(item.id) ? "Unprotect" : "Protect", systemImage: "lock") {
+                        model.toggleProtection(item.id)
+                    }.disabled(item.favorite)
+                }
             Button { decide(item, remove: false, width: width) } label: {
                 Label("Keep", systemImage: "checkmark").font(.headline).frame(maxWidth: .infinity, minHeight: 56)
             }.buttonStyle(PearlReviewButton(tint: keepColor)).disabled(leaving || model.favoriting.contains(item.id))
@@ -206,32 +206,6 @@ struct ReviewView: View {
     }
     private func updateReviewedCount() {
         reviewedCount = session.items.reduce(0) { $0 + (model.queue.reviewed.contains($1.id) ? 1 : 0) }
-    }
-}
-
-private struct ReviewMedia: View {
-    let item: MediaItem
-    @Environment(PearlModel.self) private var model
-    @State private var player: AVPlayer?
-    @State private var loading = false
-    var body: some View {
-        ZStack {
-            Thumbnail(id: item.id, size: 1600, modified: item.modified, fit: true)
-            if let player { VideoPlayer(player: player) }
-            else if item.isVideo {
-                Button {
-                    loading = true
-                    Task {
-                        if let source = await PhotoAccess.video(item.id, network: model.allowCloud) { player = source.player(); player?.play() }
-                        else { model.notice = "This video needs an iCloud download. Enable downloads in Settings, then try again." }
-                        loading = false
-                    }
-                } label: {
-                    Image(systemName: loading ? "hourglass" : "play.circle.fill").font(.system(size: 52)).foregroundStyle(.white).shadow(radius: 4)
-                }.disabled(loading).accessibilityLabel("Play video")
-            }
-        }.id(item.id).onChange(of: item.id) { _, _ in player?.pause(); player = nil; loading = false }
-            .onDisappear { player?.pause(); player = nil }
     }
 }
 

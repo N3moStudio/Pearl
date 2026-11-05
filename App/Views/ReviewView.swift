@@ -7,14 +7,13 @@ struct MediaViewer: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(PearlModel.self) private var model
     @State private var image: UIImage?
-    @State private var player: AVPlayer?
     @State private var loading = true
     @State private var cloud = false
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.black.ignoresSafeArea()
-                if let player { VideoPlayer(player: player) }
+                if item.isVideo { MediaPreview(item: item).id(item.id) }
                 else if let image { ZoomPhoto(image: image) }
                 else if loading { ProgressView().tint(.white).accessibilityLabel("Loading preview") }
                 else {
@@ -28,11 +27,12 @@ struct MediaViewer: View {
             }.toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
                 .task(id: cloud) {
                     loading = true
-                    if item.isVideo, let asset = await PhotoAccess.video(item.id, network: cloud || model.allowCloud) {
-                        guard !Task.isCancelled else { return }; player = asset.player()
-                    } else if !item.isVideo { image = await PhotoAccess.image(item.id, size: 2000, network: cloud || model.allowCloud) }
+                    guard !item.isVideo else { return }
+                    let result = await PhotoAccess.image(item.id, size: 2000, network: cloud || model.allowCloud)
+                    guard !Task.isCancelled else { return }
+                    image = result
                     loading = false
-                }.onDisappear { player?.pause(); player = nil }
+                }
         }
     }
 }

@@ -73,8 +73,14 @@ struct Thumbnail: View {
     var size: CGFloat = 260
     var modified: Date = .distantPast
     var fit = false
+    var network = false
+    var showStatus = false
     @State private var image: UIImage?
     @State private var finished = false
+    @State private var loadedID: String?
+    @State private var download = false
+    @State private var retry = 0
+    private var requestKey: String { "\(id)-\(size)-\(modified.timeIntervalSince1970)-\(network || download)-\(retry)" }
     var body: some View {
         GeometryReader { proxy in
             ZStack {
@@ -82,24 +88,44 @@ struct Thumbnail: View {
                 if let image {
                     Image(uiImage: image).resizable().aspectRatio(contentMode: fit ? .fit : .fill)
                         .frame(width: proxy.size.width, height: proxy.size.height).clipped()
+                        .accessibilityLabel("Media preview").accessibilityIdentifier("previewImage")
+                } else if showStatus && finished {
+                    VStack(spacing: 12) {
+                        Image(systemName: "icloud")
+                        Text("Preview unavailable").font(.headline)
+                        Button(network || download ? "Retry preview" : "Download preview from iCloud") {
+                            download = true; retry += 1
+                        }.buttonStyle(.bordered)
+                    }.padding().foregroundStyle(.white)
+                } else if showStatus {
+                    ProgressView().tint(.white).accessibilityLabel("Loading preview")
                 } else if finished {
                     Image(systemName: "icloud").foregroundStyle(.secondary)
                 }
             }
         }
-        .task(id: id + "\(modified.timeIntervalSince1970)") {
-            image = nil; finished = false
+        .task(id: requestKey) {
+            // Keep the same asset's poster through a favorite/metadata update.
+            // Never show a previous asset while rapidly jumping the filmstrip.
+            if loadedID != id { image = nil; download = false }
+            loadedID = id; finished = false
             let key = "\(id)-\(size)-\(modified.timeIntervalSince1970)" as NSString
             if let cached = ThumbnailCache.images.object(forKey: key) { image = cached; finished = true; return }
-            let result = await PhotoAccess.image(id, size: size)
+            if showStatus && image == nil {
+                let poster = await PhotoAccess.image(id, size: 300)
+                guard !Task.isCancelled else { return }
+                image = poster
+            }
+            let result = await PhotoAccess.image(id, size: size, network: network || download)
             guard !Task.isCancelled else { return }
-            image = result; finished = true
+            if let result { image = result }
+            finished = true
             if let result {
                 let cost = result.cgImage.map { $0.bytesPerRow * $0.height } ??
                     Int(result.size.width * result.size.height * result.scale * result.scale * 4)
                 ThumbnailCache.images.setObject(result, forKey: key, cost: cost)
             }
-        }.accessibilityHidden(true)
+        }.accessibilityHidden(!showStatus)
     }
 }
 

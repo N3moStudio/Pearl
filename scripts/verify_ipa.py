@@ -15,8 +15,8 @@ with zipfile.ZipFile(ipa) as archive:
     assert all(n == 'Payload/' or n.startswith(root) for n in names), 'Unexpected payload'
     info = plistlib.loads(archive.read(root + 'Info.plist'))
     assert info['CFBundleIdentifier'] == 'com.n3mostudio.pearl'
-    assert info['CFBundleShortVersionString'] == '0.2.0'
-    assert info['CFBundleVersion'] == '2'
+    assert info['CFBundleShortVersionString'] == '0.2.1'
+    assert info['CFBundleVersion'] == '3'
     assert 'processing' in info['UIBackgroundModes']
     assert info['BGTaskSchedulerPermittedIdentifiers'] == ['com.n3mostudio.pearl.scan.*']
     assert info['MinimumOSVersion'] == '18.0'

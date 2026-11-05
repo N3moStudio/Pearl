@@ -1,4 +1,4 @@
-# Pearl 0.2.0 implementation
+# Pearl 0.2.1 implementation
 
 Authorized November 4, 2026. Canonical code: `C:\Users\naith\Documents\GitHub\Photo Cleaner`. Private remote: https://github.com/N3moStudio/Pearl. The existing GitHub Desktop registration is retained. No desktop input or browser control is required.
 

@@ -45,12 +45,7 @@ struct RootView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Settings", systemImage: "slider.horizontal.3") { settings = true }
                 }
-                if !model.pendingItems.isEmpty {
-                    ToolbarItem(placement: .bottomBar) {
-                        Button("Review \(model.pendingItems.count) selected", systemImage: "tray") { model.showQueue = true }
-                            .accessibilityIdentifier("reviewQueue")
-                    }
-                }
+                ReviewQueueToolbar()
             }
         }
     }

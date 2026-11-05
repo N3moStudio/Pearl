@@ -66,6 +66,7 @@ struct ReviewView: View {
                 }
             }.padding(22).frame(maxWidth: 650).frame(maxWidth: .infinity)
         }.background(PearlStyle.canvas).navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+            .toolbar { ReviewQueueToolbar() }
             .sheet(isPresented: $viewing) { if position < session.count { MediaViewer(item: session[position]) } }
     }
     private func decide(_ item: MediaItem, remove: Bool) {

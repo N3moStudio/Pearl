@@ -12,6 +12,18 @@ enum PearlStyle {
     static let card = Color(uiColor: .secondarySystemGroupedBackground)
 }
 
+struct ReviewQueueToolbar: ToolbarContent {
+    @Environment(PearlModel.self) private var model
+    var body: some ToolbarContent {
+        if !model.pendingItems.isEmpty {
+            ToolbarItem(placement: .bottomBar) {
+                Button("Review \(model.pendingItems.count) selected", systemImage: "tray") { model.showQueue = true }
+                    .accessibilityIdentifier("reviewQueue")
+            }
+        }
+    }
+}
+
 extension View {
     func pearlCard() -> some View {
         self.padding(18).background(PearlStyle.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))

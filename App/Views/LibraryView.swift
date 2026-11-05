@@ -143,6 +143,7 @@ struct MediaGrid: View {
             }.padding(12)
         }.background(PearlStyle.canvas).navigationTitle(title).navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ReviewQueueToolbar()
             ToolbarItem(placement: .topBarTrailing) {
                 Button(selecting ? "Done" : "Select") { selecting.toggle(); selected = [] }
             }

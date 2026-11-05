@@ -20,7 +20,8 @@ actor SimilarityScanner {
     private func read(_ item: MediaItem) -> Fingerprint? {
         guard let data = try? Data(contentsOf: file(item.id)),
               let print = try? JSONDecoder().decode(Fingerprint.self, from: data),
-              print.version == Fingerprint.version, print.modified == item.modified else { return nil }
+              print.version == Fingerprint.version, print.runtime == Fingerprint.runtimeKey,
+              print.modified == item.modified else { return nil }
         return print
     }
     func clear() throws {

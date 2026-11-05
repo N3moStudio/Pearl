@@ -133,9 +133,20 @@ enum AlbumAccess {
         try await PHPhotoLibrary.shared().performChanges(changes)
     }
     @concurrent static func add(_ ids: Set<String>, to albumID: String) async throws {
-        guard let album = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [albumID], options: nil).firstObject else { return }
+        guard let album = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [albumID], options: nil).firstObject,
+              album.canPerform(.addContent) else { throw AlbumError.unavailable }
         let assets = PHAsset.fetchAssets(withLocalIdentifiers: Array(ids), options: nil)
+        guard assets.count == ids.count else { throw AlbumError.selectionChanged }
         let changes: @Sendable () -> Void = { PHAssetCollectionChangeRequest(for: album)?.addAssets(assets) }
         try await PHPhotoLibrary.shared().performChanges(changes)
+    }
+    enum AlbumError: LocalizedError {
+        case unavailable, selectionChanged
+        var errorDescription: String? {
+            switch self {
+            case .unavailable: "This album is no longer available for changes. Choose a different album."
+            case .selectionChanged: "Some selected items are no longer accessible. Refresh your library and select them again."
+            }
+        }
     }
 }

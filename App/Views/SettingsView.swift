@@ -23,7 +23,8 @@ struct SettingsView: View {
                 }
                 Section("Your data") {
                     Label("No account, analytics, or photo uploads", systemImage: "lock.shield")
-                    Button("Clear analysis cache") { Task { await model.clearCache() } }.disabled(model.scanning)
+                    Button(model.clearingCache ? "Clearing analysis cache…" : "Clear analysis cache") { Task { await model.clearCache() } }
+                        .disabled(model.scanning || model.clearingCache)
                     Text("Review choices stay on this iPhone. Clearing the cache keeps your review queue and original photos.").font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("About Pearl") {

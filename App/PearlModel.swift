@@ -10,6 +10,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     var queue = ReviewQueue()
     var scan = ScanProgress()
     var scanning = false
+    var clearingCache = false
     var scanMessage = "Find a little more space."
     var loading = false
     var deleting = false
@@ -107,7 +108,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         } catch { self.error = "Nothing was cleared from your review queue. \(error.localizedDescription)" }
     }
     func beginScan() {
-        guard canRead, !scanning, !items.isEmpty else { return }
+        guard canRead, !scanning, !clearingCache, !items.isEmpty else { return }
         let generation = UUID(); scanGeneration = generation
         scanning = true; scanMessage = "Checking on your iPhone…"
         let input = items, network = allowCloud
@@ -139,6 +140,9 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         scanMessage = "Scan paused. Your results are still here."
     }
     func clearCache() async {
+        guard !clearingCache else { return }
+        clearingCache = true
+        defer { clearingCache = false }
         stopScan()
         if let scanTask { await scanTask.value }
         do { try await scanner.clear(); scan = ScanProgress(); scanMessage = "Analysis cache cleared." }

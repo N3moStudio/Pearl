@@ -23,7 +23,7 @@ struct CleanupView: View {
                     Button(model.scanning ? "Pause scan" : (model.scan.checked > 0 ? "Scan again" : "Find similar moments"),
                            systemImage: model.scanning ? "pause" : "sparkles") {
                         if model.scanning { model.stopScan() } else { model.beginScan() }
-                    }.buttonStyle(.borderedProminent).controlSize(.large).disabled(model.items.isEmpty)
+                    }.buttonStyle(.borderedProminent).controlSize(.large).disabled(model.items.isEmpty || model.clearingCache)
                         .accessibilityIdentifier("scanButton")
                 }.pearlCard()
                 groupRow("Exact duplicates", subtitle: "Matching original files", kind: .exact, symbol: "square.on.square")

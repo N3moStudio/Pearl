@@ -25,6 +25,7 @@ mkdir -p build/package/Payload
 ditto "$app" build/package/Payload/Pearl.app
 (cd build/package && zip -qry ../Pearl-0.1.0.ipa Payload)
 shasum -a 256 build/Pearl-0.1.0.ipa
+python3 scripts/verify_ipa.py build/Pearl-0.1.0.ipa
 udid=$(xcrun simctl list devices available -j | python3 -c 'import sys,json; d=json.load(sys.stdin); print(next(v["udid"] for a in d["devices"].values() for v in a if "iPhone" in v["name"]))')
 xcrun simctl boot "$udid" || true
 xcrun simctl bootstatus "$udid" -b

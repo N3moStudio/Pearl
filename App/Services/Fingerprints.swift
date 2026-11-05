@@ -9,7 +9,12 @@ import PearlCore
 
 struct Fingerprint: Codable, Sendable {
     static let version = 1
+    static var runtimeKey: String {
+        let version = ProcessInfo.processInfo.operatingSystemVersion
+        return "vision-r2-\(version.majorVersion).\(version.minorVersion).\(version.patchVersion)"
+    }
     let version: Int
+    let runtime: String
     let modified: Date
     let prints: [Data]
     let hash: UInt64
@@ -90,7 +95,8 @@ enum Fingerprints {
         // Failure to access an original must not discard an otherwise usable similarity print.
         let exact = try? await exactDigest(item.id, network: network)
         try Task.checkCancellation()
-        return Fingerprint(version: Fingerprint.version, modified: item.modified, prints: prints, hash: hash, exact: exact)
+        return Fingerprint(version: Fingerprint.version, runtime: Fingerprint.runtimeKey,
+                           modified: item.modified, prints: prints, hash: hash, exact: exact)
     }
     enum ScanError: Error { case unavailable }
     private static func uprightImage(_ image: UIImage) -> CGImage? {

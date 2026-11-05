@@ -85,6 +85,11 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     }
     func undo() { guard !deleting else { return }; queue.undo(); persist() }
     func protect(_ id: String) { guard !deleting else { return }; queue.protect(id); persist() }
+    func toggleProtection(_ id: String) {
+        guard !deleting else { return }
+        if queue.protected.contains(id) { queue.unprotect(id) } else { queue.protect(id) }
+        persist()
+    }
     func unstage(_ id: String) { guard !deleting else { return }; queue.unstage(id); persist() }
     func removeConfirmed() async {
         guard ready, !deleting else { return }

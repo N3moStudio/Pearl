@@ -24,6 +24,7 @@ public struct ReviewQueue: Codable, Sendable {
     public mutating func protect(_ id: String) {
         protected.insert(id); pending.remove(id); history.removeAll { $0.id == id }
     }
+    public mutating func unprotect(_ id: String) { protected.remove(id) }
     public mutating func unstage(_ id: String) {
         pending.remove(id); reviewed.remove(id); history.removeAll { $0.id == id }
     }

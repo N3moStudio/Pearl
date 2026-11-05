@@ -1,6 +1,15 @@
 import XCTest
 
 final class PearlUITests: XCTestCase {
+    @MainActor func testLargeTextAndDarkAppearance() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL", "-AppleInterfaceStyle", "Dark"]
+        app.launch()
+        XCTAssertTrue(app.navigationBars["Your library"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.tabBars.buttons["Clean Up"].isHittable)
+        let screenshot = XCTAttachment(screenshot: app.screenshot())
+        screenshot.name = "Pearl-Large-Text-Dark"; screenshot.lifetime = .keepAlways; add(screenshot)
+    }
     @MainActor func testLibraryReviewAndLocalScan() throws {
         let app = XCUIApplication(); app.launch()
         XCTAssertTrue(app.navigationBars["Your library"].waitForExistence(timeout: 20))

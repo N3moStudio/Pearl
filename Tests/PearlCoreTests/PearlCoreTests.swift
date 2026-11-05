@@ -30,6 +30,10 @@ import Testing
     #expect(!accepted5)
     queue.undo()
     #expect(queue.pending.isEmpty)
+    queue.unprotect("a")
+    #expect(queue.pending.isEmpty)
+    let acceptedAfterUnprotect = queue.decide(MediaItem(id: "a"), remove: true)
+    #expect(acceptedAfterUnprotect)
 }
 
 @Test func inaccessibleItemsAndSuccessfulDeletionsLeaveNoStaleUndo() {

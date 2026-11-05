@@ -52,7 +52,9 @@ struct ReviewView: View {
                         Spacer()
                         Button("Skip") { position += 1 }
                         Spacer()
-                        Button("Protect", systemImage: "lock") { model.protect(item.id); history = [] }
+                        Button(model.queue.protected.contains(item.id) ? "Unprotect" : "Protect", systemImage: "lock") {
+                            model.toggleProtection(item.id); history = []
+                        }.disabled(item.favorite)
                     }.font(.subheadline)
                 } else {
                     ContentUnavailableView("A little lighter", systemImage: "checkmark.circle", description: Text("This review is finished. Your choices are saved."))

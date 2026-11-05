@@ -23,7 +23,7 @@ codesign --force --sign - "$app"
 codesign --verify --deep --strict "$app"
 mkdir -p build/package/Payload
 ditto "$app" build/package/Payload/Pearl.app
-(cd build/package && zip -qry ../../Pearl-0.1.0.ipa Payload)
+(cd build/package && zip -qry ../Pearl-0.1.0.ipa Payload)
 shasum -a 256 build/Pearl-0.1.0.ipa
 udid=$(xcrun simctl list devices available -j | python3 -c 'import sys,json; d=json.load(sys.stdin); print(next(v["udid"] for a in d["devices"].values() for v in a if "iPhone" in v["name"]))')
 xcrun simctl boot "$udid" || true

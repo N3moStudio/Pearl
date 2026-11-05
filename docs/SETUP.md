@@ -1,5 +1,6 @@
 # Local repository setup
 
+> Planning baseline retained for context. Implementation was authorized November 4, 2026. Current status and build instructions: [BUILD.md](BUILD.md). The app and local video matching are now implemented; the remote is private N3moStudio/Pearl.
 - Canonical path: `C:\Users\naith\Documents\GitHub\Photo Cleaner`.
 - Location verified alongside existing Elsepin and Calc 84 repositories.
 - Local Git branch: `main`.

@@ -41,6 +41,7 @@ targets:
         NSPhotoLibraryAddUsageDescription: Pearl creates albums you choose in your photo library.
         PHPhotoLibraryPreventAutomaticLimitedAccessAlert: true
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         ITSAppUsesNonExemptEncryption: false
   PearlUITests:
     type: bundle.ui-testing

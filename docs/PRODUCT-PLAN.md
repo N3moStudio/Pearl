@@ -1,5 +1,6 @@
 # Product plan
 
+> Planning baseline retained for context. Implementation was authorized November 4, 2026. Current status and build instructions: [BUILD.md](BUILD.md). The app and local video matching are now implemented; the remote is private N3moStudio/Pearl.
 ## Product promise
 
 Make a large camera roll feel manageable. Open the app, choose a small part of the library, keep what matters, and review anything marked for removal.

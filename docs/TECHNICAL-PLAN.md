@@ -1,5 +1,6 @@
 # Technical groundwork — proposal, not implementation
 
+> Planning baseline retained for context. Implementation was authorized November 4, 2026. Current status and build instructions: [BUILD.md](BUILD.md). The app and local video matching are now implemented; the remote is private N3moStudio/Pearl.
 ## Native foundation
 
 | Responsibility | Proposed approach | Why |

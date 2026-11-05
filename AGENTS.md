@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Research, design, and repository setup only. The user explicitly asked not to build the app yet. A later request to set up the local repository does not itself approve app implementation. Keep future app code in this repository, alongside the user's other repositories under `C:\Users\naith\Documents\GitHub`.
+Implementation authorized November 4, 2026: build the Pearl app, local similar photo/video detection, core cleanup features, and a sideloadable IPA. Keep all code in this repository alongside the user's other repositories under `C:\Users\naith\Documents\GitHub`. Use background commands only. A private build repository and CI are part of IPA delivery; do not publish a public release.
 
 ## Accepted product decisions
 

@@ -34,7 +34,7 @@ Candidate retrieval combines up to 32 recent shots within two minutes and bounde
 
 This is the initial useful native build, not completion of every research idea. It includes the requested local video workflow now rather than deferring it to P1. Live Photos can be browsed and reviewed as stills; full motion playback, RAW/burst handling, compression, OCR, semantic search, byte-savings estimates, album pinning and export are later work.
 
-Review decisions persist across launches. A restarted scan reuses valid fingerprints but rebuilds groups; it does not resume an exact scan cursor. Cache invalidation uses modification date and a schema/version pinned to Vision request revision 2. The cache may be purged by iOS. Scanning is foreground-only and uses available local resources unless the user enables iCloud downloads. An unavailable item is counted rather than treated as a non-match.
+Review decisions persist across launches. A restarted scan reuses valid fingerprints but rebuilds groups; it does not resume an exact scan cursor. Cache invalidation uses modification date and a schema/version pinned to Vision request revision 2 and the OS version. The cache may be purged by iOS. Scanning is foreground-only and uses available local resources unless the user enables iCloud downloads. An unavailable item is counted rather than treated as a non-match.
 
 Core tests cover reversible choices, favorites/protected items, stale IDs, deletion completion, persistence round trips, complete-link distances, five-frame/duration gates, cross-date candidates and shortlist bounds. CI also mutates the favorite guard and requires the relevant test to fail before restoring the original source.
 

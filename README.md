@@ -2,7 +2,9 @@
 
 A calm, native iPhone app for browsing, organizing, and reviewing a large photo library in manageable pieces.
 
-**Status: native iOS 0.1.0 implementation and private IPA validation.**
+**Status: Pearl 0.1.0 built and verified for personal sideload signing.**
+
+[Verification and IPA details](docs/VERIFICATION.md) · [Actual simulator screenshots](docs/SCREENSHOTS.md) · [First iPhone check](docs/DEVICE-CHECK.md)
 
 The user selected the **Pearl visual direction**: warm white, sage accents, rounded shapes, generous spacing, native system glass, textured loading placeholders, and small Thinking Orbs. The first app uses Pearl as its name and `com.n3mostudio.pearl` as its bundle ID, with iOS 18 as the baseline.
 

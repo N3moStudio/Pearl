@@ -171,8 +171,8 @@ Acceptance: the app remains usable with the largest supported text sizes, VoiceO
 - [ ] Q06 Validate Low Power, thermal pressure and app suspension behavior.
 - [x] Q07 Check that logs and diagnostics contain no personal media or sensitive metadata.
 - [x] Q08 Review dependency licenses and retain required notices.
-- [ ] Q09 Compile on a suitable Mac/Xcode runner after implementation is authorized.
-- [ ] Q10 Produce a versioned IPA, validate its contents and record SHA-256.
+- [x] Q09 Compile on a suitable Mac/Xcode runner after implementation is authorized.
+- [x] Q10 Produce a versioned IPA, validate its contents and record SHA-256.
 - [ ] Q11 Install with the selected signing workflow and test on the actual iPhone.
 - [ ] Q12 Test upgrading the app without losing sessions, exclusions or settings.
 

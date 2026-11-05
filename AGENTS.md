@@ -26,3 +26,7 @@ Validate changes at the right level. Static analysis and conceptual images do no
 Protect real personal media and signing credentials. No personal-photo fixtures in Git, logs, or remote services. Keep any temporary source downloads under ignored `research/evidence/`.
 
 The authorized IPA build uses the private remote `N3moStudio/Pearl`. Do not make it public or publish a release without a request. Preserve the canonical local folder and GitHub Desktop registration.
+
+## IPA delivery
+
+The user's November 5, 2026 instruction is to place the actual latest tested Pearl IPA in `C:\Users\naith\Desktop\ipa\My Projects (N3mo Studio)`. Keep only the current delivered Pearl IPA there, replacing older Pearl versions after the new tested artifact is available. Leave other projects' IPAs alone. Deliver only the `.ipa`; do not add checksum sidecars, ZIP archives, logs, screenshots, or reports to that folder or Downloads. Keep any needed engineering evidence inside the repository instead. Keep delivery replies brief and omit checksum details unless requested.

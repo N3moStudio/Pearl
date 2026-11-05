@@ -32,6 +32,8 @@ These are AI-generated concept images with sample media and counts. They do not 
 
 Canonical local repository: `C:\Users\naith\Documents\GitHub\Photo Cleaner`, alongside Elsepin and Calc 84.
 
+Latest tested IPA delivery folder: `C:\Users\naith\Desktop\ipa\My Projects (N3mo Studio)`. Only the current Pearl IPA is delivered there; older delivered Pearl versions are replaced. No ZIP or checksum sidecar is needed.
+
 The folder is registered in GitHub Desktop's local repository list. Setup used background operations and did not take over the mouse, keyboard or active window.
 
 Private source/build remote: [N3moStudio/Pearl](https://github.com/N3moStudio/Pearl). XcodeGen produces the native project from `project.yml`. Codemagic compiles the app on a Mac, runs core and simulator checks, then packages an ad-hoc IPA for personal re-signing. The manual GitHub Actions workflow remains available but its account billing block is unresolved. Signing credentials and personal media are never stored in this repository.

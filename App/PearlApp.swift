@@ -7,12 +7,19 @@ struct PearlApp: App {
     var body: some Scene {
         WindowGroup {
             RootView().environment(model).tint(PearlStyle.sage)
+                .preferredColorScheme(testAppearance)
                 .task { await model.start() }
                 .onChange(of: scenePhase) { _, phase in
                     if phase != .active { model.stopScan() }
                     else if model.ready { Task { await model.refresh() } }
                 }
         }
+    }
+    private var testAppearance: ColorScheme? {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--ui-test-dark") { return .dark }
+        #endif
+        return nil
     }
 }
 

@@ -16,8 +16,9 @@ struct ReviewQueueToolbar: ToolbarContent {
     @Environment(PearlModel.self) private var model
     var body: some ToolbarContent {
         if !model.pendingItems.isEmpty {
-            ToolbarItem(placement: .bottomBar) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button("Review \(model.pendingItems.count) selected", systemImage: "tray") { model.showQueue = true }
+                    .labelStyle(.iconOnly)
                     .accessibilityIdentifier("reviewQueue")
             }
         }
@@ -93,7 +94,11 @@ struct Thumbnail: View {
             let result = await PhotoAccess.image(id, size: size)
             guard !Task.isCancelled else { return }
             image = result; finished = true
-            if let result { ThumbnailCache.images.setObject(result, forKey: key, cost: Int(result.size.width * result.size.height * 4)) }
+            if let result {
+                let cost = result.cgImage.map { $0.bytesPerRow * $0.height } ??
+                    Int(result.size.width * result.size.height * result.scale * result.scale * 4)
+                ThumbnailCache.images.setObject(result, forKey: key, cost: cost)
+            }
         }.accessibilityHidden(true)
     }
 }

@@ -3,7 +3,7 @@ import XCTest
 final class PearlUITests: XCTestCase {
     @MainActor func testLargeTextAndDarkAppearance() {
         let app = XCUIApplication()
-        app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL", "-AppleInterfaceStyle", "Dark"]
+        app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL", "--ui-test-dark"]
         app.launch()
         XCTAssertTrue(app.navigationBars["Your library"].waitForExistence(timeout: 20))
         XCTAssertTrue(app.tabBars.buttons["Clean Up"].isHittable)
@@ -23,6 +23,8 @@ final class PearlUITests: XCTestCase {
         app.buttons["undoReview"].tap()
         XCTAssertFalse(app.buttons["undoReview"].isEnabled)
         remove.tap()
+        let review = XCTAttachment(screenshot: app.screenshot()); review.name = "Pearl-Review"; review.lifetime = .keepAlways; add(review)
+        XCTAssertTrue(app.buttons["reviewQueue"].isHittable)
         app.buttons["reviewQueue"].tap()
         XCTAssertTrue(app.navigationBars["Review removal"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["confirmRemoval"].isEnabled)

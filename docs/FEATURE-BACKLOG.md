@@ -1,6 +1,6 @@
 # Full feature checklist
 
-Checked items are implemented in the 0.1.0 source; device acceptance is separate. Partial items remain unchecked. See [build scope and validation](BUILD.md). The user moved local similar-video detection into this first build.
+Checked items are implemented in the 0.2.0 source; device acceptance is separate. Partial items remain unchecked. See [build scope and validation](BUILD.md). The user moved local similar-video detection into this first build.
 
 P0 = first useful sideloaded version. P1 = next release after core behavior is trustworthy. P2 = optional extension, to be reconsidered with the user. Phases are scope recommendations, not time estimates.
 
@@ -23,7 +23,7 @@ P0 = first useful sideloaded version. P1 = next release after core behavior is t
 - [x] O03 Handle full, limited, denied and restricted Photos access.
 - [ ] O04 Manage limited selection without losing existing review decisions.
 - [x] O05 Start browsing before the full similarity scan finishes.
-- [x] O06 Contextual gesture explanation; visible Keep/Remove/Skip buttons.
+- [x] O06 Contextual gesture explanation; visible Delete / Heart / Keep controls and a tappable filmstrip for skipping.
 - [x] O07 Empty-library, no-results and all-reviewed states.
 - [ ] O08 A useful initial small session with an obvious way to stop.
 
@@ -31,7 +31,7 @@ Acceptance: a person with partial access can reach accessible photos, complete a
 
 ## P0 — Browse a large library
 
-- [x] L01 Library / Clean Up / Albums navigation; Settings in the toolbar.
+- [x] L01 Home / Clean Up / Albums navigation; Settings in the toolbar.
 - [ ] L02 Years → months → optional days, with newest/oldest sorting.
 - [x] L03 Photos, Videos and Screenshots as prominent media types.
 - [ ] L04 More media types: Live Photos, screen recordings, bursts, selfies, portraits, panoramas, RAW and slow-motion/time-lapse where public APIs support them.
@@ -39,7 +39,7 @@ Acceptance: a person with partial access can reach accessible photos, complete a
 - [x] L06 Media metadata: date, dimensions, duration and supported size details.
 - [ ] L07 Largest-first ordering with unknown-size handling and cancellable size work.
 - [ ] L08 Unknown date group; explicit date/time-zone semantics.
-- [ ] L09 Visible month progress and a Continue card.
+- [x] L09 Visible month progress; opening a month resumes its first unreviewed item.
 - [x] L10 Keep app smart collections separate from system albums.
 - [ ] L11 Full-size viewer with zoom, video playback/scrubbing and Live Photo preview.
 - [x] L12 Reflect additions, modifications, deletions and permission changes from Photos.
@@ -53,9 +53,9 @@ Acceptance: a user can reach videos from a specific old month without scanning a
 - [x] R01 Swipe or tap to Keep, queue Remove, or Skip.
 - [x] R02 Undo the last decision; restore its position and counts.
 - [x] R03 Persist session progress and pending queue across launches.
-- [ ] R04 Resume a partially reviewed month or category.
+- [x] R04 Resume a partially reviewed month or category.
 - [x] R05 Grid multi-selection for people who prefer batch review.
-- [ ] R06 Favorite and protect an item without leaving review.
+- [x] R06 Favorite and protect an item without leaving review.
 - [x] R07 Exclude favorites/protected assets from deletion recommendations by default.
 - [x] R08 Review the entire pending batch before a deletion request.
 - [ ] R09 Explicit item count, clear action wording and honest byte estimates.

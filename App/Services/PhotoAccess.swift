@@ -95,18 +95,34 @@ final class VideoSource: @unchecked Sendable {
     init(_ asset: AVAsset) { self.asset = asset }
     @MainActor func player() -> AVPlayer { AVPlayer(playerItem: AVPlayerItem(asset: asset)) }
     @concurrent func frames(duration: Double) async throws -> [CGImage] {
-        let generator = AVAssetImageGenerator(asset: asset)
+        try await VideoFrameRequest(asset: asset).images(duration: duration)
+    }
+}
+
+/// One extraction owns this generator. Configuration is immutable after init;
+/// the only cross-thread operation is AVFoundation's cancellation API.
+private final class VideoFrameRequest: @unchecked Sendable {
+    private let generator: AVAssetImageGenerator
+    init(asset: AVAsset) {
+        generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
         generator.maximumSize = CGSize(width: 512, height: 512)
         generator.requestedTimeToleranceBefore = CMTime(seconds: 0.05, preferredTimescale: 600)
         generator.requestedTimeToleranceAfter = CMTime(seconds: 0.05, preferredTimescale: 600)
-        var images: [CGImage] = []
-        for fraction in [0.1, 0.3, 0.5, 0.7, 0.9] {
+    }
+    @concurrent func images(duration: Double) async throws -> [CGImage] {
+        try await withTaskCancellationHandler {
+            var images: [CGImage] = []
+            for fraction in [0.1, 0.3, 0.5, 0.7, 0.9] {
+                try Task.checkCancellation()
+                let image = try await generator.image(at: CMTime(seconds: duration * fraction, preferredTimescale: 600)).image
+                images.append(image)
+            }
             try Task.checkCancellation()
-            let image = try await generator.image(at: CMTime(seconds: duration * fraction, preferredTimescale: 600)).image
-            images.append(image)
+            return images
+        } onCancel: {
+            generator.cancelAllCGImageGeneration()
         }
-        return images
     }
 }
 

@@ -78,7 +78,7 @@ struct Thumbnail: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                PearlPlaceholder()
+                if fit && image != nil { Color.black } else { PearlPlaceholder() }
                 if let image {
                     Image(uiImage: image).resizable().aspectRatio(contentMode: fit ? .fit : .fill)
                         .frame(width: proxy.size.width, height: proxy.size.height).clipped()

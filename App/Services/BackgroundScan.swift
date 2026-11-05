@@ -4,8 +4,7 @@ import PearlCore
 
 /// Main-queue ownership keeps the legacy BGTask object off actor crossings.
 @MainActor final class BackgroundScan {
-    private let identifier = (Bundle.main.bundleIdentifier ?? "com.n3mostudio.pearl") + ".scan.work"
-    private var registered = false
+    private var identifier: String?
     private var task: BGTask?
     private var start: (@MainActor @Sendable () -> Void)?
     private var expiration: (@MainActor @Sendable () -> Void)?
@@ -17,10 +16,14 @@ import PearlCore
                  expiration: @escaping @MainActor @Sendable () -> Void) -> Bool {
         guard #available(iOS 26.0, *) else { return false }
         self.start = start; self.expiration = expiration; token = UUID()
-        if !registered {
-            registered = BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: .main) { [weak self] task in
-                // Apple's explicitly supplied main dispatch queue guarantees this executor.
-                MainActor.assumeIsolated { self?.accept(task) }
+        let current = token
+        let identifier = (Bundle.main.bundleIdentifier ?? "com.n3mostudio.pearl") + ".scan." + current.uuidString
+        self.identifier = identifier
+        let registered = BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: .main) { [weak self] task in
+            // Apple's explicitly supplied main dispatch queue guarantees this executor.
+            MainActor.assumeIsolated {
+                guard let self else { task.setTaskCompleted(success: false); return }
+                self.accept(task, token: current)
             }
         }
         guard registered else { return false }
@@ -29,8 +32,8 @@ import PearlCore
         do { try BGTaskScheduler.shared.submit(request); return true }
         catch { self.start = nil; self.expiration = nil; return false }
     }
-    private func accept(_ incoming: BGTask) {
-        guard let start else { incoming.setTaskCompleted(success: false); return }
+    private func accept(_ incoming: BGTask, token: UUID) {
+        guard self.token == token, let start else { incoming.setTaskCompleted(success: false); return }
         task = incoming
         let current = token
         incoming.expirationHandler = { [weak self] in
@@ -53,7 +56,8 @@ import PearlCore
         token = UUID()
         task?.setTaskCompleted(success: success); task = nil
         start = nil; expiration = nil
-        BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: identifier)
+        if let identifier { BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: identifier) }
+        identifier = nil
         endSaving()
     }
     /// Older iOS gets only a short lease to cancel and checkpoint, never an unlimited scan.

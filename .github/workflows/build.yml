@@ -36,6 +36,21 @@ jobs:
       - name: Install XcodeGen
         if: ${{ !inputs.tests_only }}
         run: brew install xcodegen
+      - name: Verify edited-photo recovery is covered
+        run: |
+          cp Sources/PearlCore/ScanCheckpoint.swift "$RUNNER_TEMP/ScanCheckpoint.swift"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Sources/PearlCore/ScanCheckpoint.swift')
+          p.write_text(p.read_text().replace('item.modified == current.modified && ', ''))
+          PY
+          if swift test --filter checkpointSurvivesRelaunchAndReconcilesEdits > "$RUNNER_TEMP/checkpoint-mutation.log" 2>&1; then
+            cp "$RUNNER_TEMP/ScanCheckpoint.swift" Sources/PearlCore/ScanCheckpoint.swift
+            echo 'ERROR: stale photo analysis escaped the recovery test'
+            exit 1
+          fi
+          cp "$RUNNER_TEMP/ScanCheckpoint.swift" Sources/PearlCore/ScanCheckpoint.swift
+          grep 'Expectation failed' "$RUNNER_TEMP/checkpoint-mutation.log"
       - name: Build and verify
         if: ${{ !inputs.tests_only }}
         run: bash scripts/build.sh

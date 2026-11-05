@@ -13,8 +13,7 @@ struct MediaGrid: View {
     @State private var mediaType = "All media"
     @State private var favoritesOnly = false
     private var visible: [MediaItem] {
-        let accessible = Set(model.items.map(\.id))
-        return items.filter { item in
+        return items.compactMap { model.item($0.id) }.filter { item in
             let typeMatches = switch mediaType {
             case "Photos": !item.isVideo
             case "Videos": item.isVideo
@@ -22,7 +21,7 @@ struct MediaGrid: View {
             case "Live Photos": item.isLive
             default: true
             }
-            return accessible.contains(item.id) && (!unreviewed || !model.queue.reviewed.contains(item.id)) &&
+            return (!unreviewed || !model.queue.reviewed.contains(item.id)) &&
                 (!favoritesOnly || item.favorite) && typeMatches
         }
             .sorted { oldest ? $0.date < $1.date : $0.date > $1.date }

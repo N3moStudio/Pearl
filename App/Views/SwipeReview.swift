@@ -7,7 +7,6 @@ struct ReviewView: View {
     @Environment(PearlModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var position: Int
     @State private var leaving = false
     @State private var exitOffset = CGSize.zero
@@ -94,7 +93,7 @@ struct ReviewView: View {
                     .opacity(min(abs(offset.width) / 100, 1)).accessibilityHidden(true)
             }
             ZStack {
-                ReviewMedia(item: item)
+                ReviewMedia(item: item).id(item.id)
                     .scaleEffect(zoom * magnification)
                     .offset(x: zoom > 1 ? pan.width + drag.width : 0, y: zoom > 1 ? pan.height + drag.height : 0)
                     .clipped()
@@ -134,6 +133,11 @@ struct ReviewView: View {
             .accessibilityIdentifier("reviewPhoto")
             .accessibilityAction(named: "Keep") { decide(item, remove: false, width: width) }
             .accessibilityAction(named: "Add to removal review") { decide(item, remove: true, width: width) }
+            .contextMenu {
+                Button(model.queue.protected.contains(item.id) ? "Unprotect" : "Protect", systemImage: "lock") {
+                    model.toggleProtection(item.id)
+                }.disabled(item.favorite)
+            }
         }.clipped()
     }
     private var filmstrip: some View {
@@ -226,17 +230,20 @@ private struct ReviewMedia: View {
 }
 
 struct PearlRoundButton: ButtonStyle {
+    @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.background(.ultraThinMaterial, in: Circle())
             .overlay(Circle().strokeBorder(.white.opacity(0.12)))
-            .opacity(configuration.isPressed ? 0.65 : 1)
+            .opacity(!enabled ? 0.35 : (configuration.isPressed ? 0.65 : 1))
     }
 }
 private struct PearlReviewButton: ButtonStyle {
     let tint: Color
+    @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.foregroundStyle(tint)
             .background(tint.opacity(configuration.isPressed ? 0.28 : 0.14), in: Capsule())
             .overlay(Capsule().strokeBorder(tint.opacity(0.3)))
+            .opacity(enabled ? 1 : 0.35)
     }
 }

@@ -2,15 +2,15 @@
 
 A calm, native iPhone app for browsing, organizing, and reviewing a large photo library in manageable pieces.
 
-**Status: Pearl 0.1.0 built and verified for personal sideload signing.**
+**Status: Pearl 0.2.0 validation in progress.**
 
 [Verification and IPA details](docs/VERIFICATION.md) · [Actual simulator screenshots](docs/SCREENSHOTS.md) · [First iPhone check](docs/DEVICE-CHECK.md)
 
 The user selected the **Pearl visual direction**: warm white, sage accents, rounded shapes, generous spacing, native system glass, textured loading placeholders, and small Thinking Orbs. The first app uses Pearl as its name and `com.n3mostudio.pearl` as its bundle ID, with iOS 18 as the baseline.
 
-Implemented: media/year/month browsing and filters; photo zoom and video playback; swipe/button review, undo, persistent choices, favorite/protection safeguards and a final review queue; album creation and batch filing; streamed exact-file hashes; on-device Vision similar-photo suggestions and five-frame video suggestions. No default deletion selection. Every deletion requires review and the system confirmation.
+Implemented: media/year/month browsing and filters; photo zoom and video playback; full-screen month-based swipe review with direct drag feedback, a filmstrip, real favorite toggle, undo, persistent choices and protection safeguards and a final review queue; album creation and batch filing; streamed exact-file hashes; on-device Vision similar-photo suggestions and five-frame video suggestions. No default deletion selection. Every deletion requires review and the system confirmation.
 
-Analysis is local. Optional iCloud downloads go through Apple; there is no analytics, cloud AI, account, advertising or subscription. Scanning pauses when the app leaves the foreground, in Low Power Mode or serious thermal pressure. [Build, architecture and limitations](docs/BUILD.md).
+Analysis is local. Optional iCloud downloads go through Apple; there is no analytics, cloud AI, account, advertising or subscription. On iOS 26+, user-started scans can continue outside Pearl with a system Live Activity when iOS grants background processing. Scans save their place and reuse previous analysis. Older iOS saves progress on leaving; Low Power Mode, heat or system limits can pause work. [Build, architecture and limitations](docs/BUILD.md).
 
 ## Start here
 

@@ -28,7 +28,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     @ObservationIgnored private let scanner = SimilarityScanner()
     @ObservationIgnored private let background = BackgroundScan()
     @ObservationIgnored private var scanItems: [String: MediaItem] = [:]
-    @ObservationIgnored private var itemLookup: [String: MediaItem] = [:]
+    private var itemLookup: [String: MediaItem] = [:]
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     @ObservationIgnored private var revision = 0
     @ObservationIgnored private var loadGeneration = 0
@@ -66,7 +66,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     }
     func refresh() async {
         authorization = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-        guard canRead else { stopScan(); items = []; albums = []; return }
+        guard canRead else { stopScan(); items = []; itemLookup = [:]; albums = []; scan.groups = []; return }
         loadGeneration += 1
         let generation = loadGeneration
         loading = true
@@ -121,7 +121,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         favoriting.insert(id); defer { favoriting.remove(id) }
         do {
             try await PhotoAccess.setFavorite(id, favorite: !current.favorite)
-            if !current.favorite { queue.unstage(id); persist() }
+            if !current.favorite && queue.pending.contains(id) { queue.unstage(id); persist() }
             await refresh()
         } catch { self.error = "Couldn't change this favorite. \(error.localizedDescription)" }
     }

@@ -20,7 +20,7 @@ final class PearlUITests: XCTestCase {
         XCTAssertTrue(item.waitForExistence(timeout: 10)); item.tap()
         let remove = app.buttons["stageRemoval"]
         XCTAssertTrue(remove.waitForExistence(timeout: 10)); remove.tap()
-        XCTAssertTrue(app.buttons["undoReview"].isEnabled)
+        waitEnabled(app.buttons["undoReview"], true)
         app.buttons["undoReview"].tap()
         XCTAssertFalse(app.buttons["undoReview"].isEnabled)
         remove.tap()
@@ -72,7 +72,7 @@ final class PearlUITests: XCTestCase {
         XCTAssertEqual(progress.label, before, "A partial drag must not decide")
         capture(app, "Pearl-Fullscreen-Review")
         start.press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.45)))
-        XCTAssertTrue(app.buttons["undoReview"].isEnabled)
+        waitEnabled(app.buttons["undoReview"], true)
         app.buttons["undoReview"].tap()
         XCTAssertEqual(progress.label, before)
         let second = app.buttons["reviewThumbnail1"]
@@ -112,6 +112,28 @@ final class PearlUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Scan complete. You choose what stays."].waitForExistence(timeout: 120))
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Reused '")).firstMatch.exists)
         capture(app, "Pearl-Resumed-Scan")
+    }
+
+    @MainActor func testLeavingAppUsesBackgroundGrantOrSavedFallback() {
+        let app = XCUIApplication(); app.launchArguments = ["--ui-test-clear-scan", "--ui-test-slow-scan"]
+        app.launch()
+        XCTAssertTrue(app.tabBars.buttons["Clean Up"].waitForExistence(timeout: 20))
+        app.tabBars.buttons["Clean Up"].tap(); waitEnabled(app.buttons["scanButton"], true)
+        app.buttons["scanButton"].tap()
+        let granted = app.staticTexts["You can leave Pearl. Track progress in the Live Activity."].exists
+        XCUIDevice.shared.press(.home)
+        XCTAssertTrue(app.wait(for: .runningBackground, timeout: 10) || app.state == .runningBackgroundSuspended)
+        let home = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        home.name = "Pearl-System-Background"; home.lifetime = .keepAlways; add(home)
+        app.activate()
+        XCTAssertTrue(app.buttons["scanButton"].waitForExistence(timeout: 10))
+        if granted {
+            XCTAssertTrue(app.buttons["scanButton"].label == "Pause scan" || app.staticTexts["Scan complete. You choose what stays."].exists)
+            if app.buttons["scanButton"].label == "Pause scan" { app.buttons["scanButton"].tap() }
+        } else {
+            XCTAssertTrue(app.staticTexts["Your place is saved. Resume when you return to Pearl."].waitForExistence(timeout: 10))
+        }
+        print("Pearl background simulator path: \(granted ? "continued processing granted" : "saved fallback")")
     }
 
     @MainActor private func waitEnabled(_ element: XCUIElement, _ enabled: Bool) {

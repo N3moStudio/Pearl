@@ -109,7 +109,7 @@ actor SimilarityScanner {
                 try checkBudget()
                 #if DEBUG
                 if ProcessInfo.processInfo.arguments.contains("--ui-test-slow-scan") {
-                    try await Task.sleep(for: .milliseconds(700))
+                    try await Task.sleep(for: .milliseconds(1500))
                 }
                 #endif
                 do {
@@ -129,7 +129,10 @@ actor SimilarityScanner {
                         for id in members {
                             try Task.checkCancellation()
                             guard let member = itemsByID[id] else { matchesAll = false; break }
-                            let prior = try await observations(member, network: network)
+                            let prior: [VNFeaturePrintObservation]
+                            do { prior = try await observations(member, network: network) }
+                            catch is CancellationError { throw CancellationError() }
+                            catch { matchesAll = false; break }
                             guard prior.count == current.count else { matchesAll = false; break }
                             let distances = try zip(prior, current).map { try Fingerprints.distance($0.0, $0.1) }
                             let match = item.isVideo ? MatchRules.similarVideo(item, member, distances: distances) : MatchRules.similarPhoto(distances)
@@ -148,7 +151,10 @@ actor SimilarityScanner {
                     index.insert(item, hash: print.hash)
                     saved.records[item.id] = ScanRecord(item: item, hash: print.hash, digest: print.exact, exactAttempted: print.exact != nil)
                 } catch is CancellationError { throw CancellationError() }
-                catch { saved.records[item.id] = ScanRecord(item: item, hash: nil); state.unavailable += 1 }
+                catch {
+                    try Task.checkCancellation()
+                    saved.records[item.id] = ScanRecord(item: item, hash: nil); state.unavailable += 1
+                }
                 state.checked += 1
                 if state.checked % 128 == 0 || Date().timeIntervalSince(lastSave) > 15 {
                     try save(saved); lastSave = Date()
@@ -158,6 +164,7 @@ actor SimilarityScanner {
                 }
             }
             // First show visual matches, then read original bytes only for plausible copies.
+            try checkBudget()
             let candidates = saved.exactCandidates
             state.phase = .verifying; state.verificationTotal = candidates.count
             saved.groups.removeAll { $0.kind == .exact }
@@ -189,6 +196,7 @@ actor SimilarityScanner {
                 }
                 state.groups = saved.groups; await progress(state)
             }
+            try checkBudget()
             saved.complete = true; try save(saved)
             state.phase = .complete; state.groups = saved.groups
             await progress(state)

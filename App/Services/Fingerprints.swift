@@ -72,14 +72,9 @@ enum Fingerprints {
         var hash: UInt64 = 0
         if item.isVideo {
             guard let asset = await PhotoAccess.video(item.id, network: network) else { throw ScanError.unavailable }
-            let generator = AVAssetImageGenerator(asset: asset)
-            generator.appliesPreferredTrackTransform = true
-            generator.maximumSize = CGSize(width: 512, height: 512)
-            generator.requestedTimeToleranceBefore = CMTime(seconds: 0.05, preferredTimescale: 600)
-            generator.requestedTimeToleranceAfter = CMTime(seconds: 0.05, preferredTimescale: 600)
-            for fraction in [0.1, 0.3, 0.5, 0.7, 0.9] {
+            for encoded in try await asset.frames(duration: item.duration) {
                 try Task.checkCancellation()
-                let frame = try await generator.image(at: CMTime(seconds: item.duration * fraction, preferredTimescale: 600)).image
+                guard let frame = UIImage(data: encoded)?.cgImage else { throw ScanError.unavailable }
                 if prints.isEmpty { hash = perceptualHash(frame) }
                 prints.append(try archive(observation(frame)))
             }

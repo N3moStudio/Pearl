@@ -45,15 +45,15 @@ enum PhotoAccess {
         return nil
     }
 
-    @concurrent static func video(_ id: String, network: Bool) async -> AVAsset? {
+    @concurrent static func video(_ id: String, network: Bool) async -> VideoSource? {
         guard !Task.isCancelled, let asset = asset(id) else { return nil }
         let manager = PHImageManager.default()
-        let stream = AsyncStream<AVAsset?> { continuation in
+        let stream = AsyncStream<VideoSource?> { continuation in
             let options = PHVideoRequestOptions()
             options.isNetworkAccessAllowed = network
             options.deliveryMode = .highQualityFormat
             let request = manager.requestAVAsset(forVideo: asset, options: options) { asset, _, _ in
-                continuation.yield(asset); continuation.finish()
+                continuation.yield(asset.map(VideoSource.init)); continuation.finish()
             }
             continuation.onTermination = { @Sendable _ in manager.cancelImageRequest(request) }
         }
@@ -78,6 +78,30 @@ enum PhotoAccess {
     enum PhotoError: LocalizedError {
         case changedSelection
         var errorDescription: String? { "Some items changed, became favorites, or cannot be deleted. Refresh your library and review the selection again." }
+    }
+}
+
+/// PhotoKit's legacy callback hands out an immutable AVAsset, which is not
+/// annotated Sendable. This narrow bridge never mutates it or exposes mutable
+/// compositions. Each request has one consumer: frame extraction OR playback.
+final class VideoSource: @unchecked Sendable {
+    private let asset: AVAsset
+    init(_ asset: AVAsset) { self.asset = asset }
+    @MainActor func player() -> AVPlayer { AVPlayer(playerItem: AVPlayerItem(asset: asset)) }
+    @concurrent func frames(duration: Double) async throws -> [Data] {
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.maximumSize = CGSize(width: 512, height: 512)
+        generator.requestedTimeToleranceBefore = CMTime(seconds: 0.05, preferredTimescale: 600)
+        generator.requestedTimeToleranceAfter = CMTime(seconds: 0.05, preferredTimescale: 600)
+        var images: [Data] = []
+        for fraction in [0.1, 0.3, 0.5, 0.7, 0.9] {
+            try Task.checkCancellation()
+            let image = try await generator.image(at: CMTime(seconds: duration * fraction, preferredTimescale: 600)).image
+            guard let encoded = UIImage(cgImage: image).pngData() else { throw Fingerprints.ScanError.unavailable }
+            images.append(encoded)
+        }
+        return images
     }
 }
 

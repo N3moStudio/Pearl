@@ -18,6 +18,21 @@ jobs:
         run: xcodebuild -version
       - name: Core tests
         run: swift test
+      - name: Verify the favorite-protection test catches a broken guard
+        run: |
+          cp Sources/PearlCore/ReviewQueue.swift "$RUNNER_TEMP/ReviewQueue.swift"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('Sources/PearlCore/ReviewQueue.swift')
+          p.write_text(p.read_text().replace('!item.favorite && !protected.contains(item.id)', 'true'))
+          PY
+          if swift test --filter favoritesAndProtectedAssetsCannotBeQueued > "$RUNNER_TEMP/mutation.log" 2>&1; then
+            cp "$RUNNER_TEMP/ReviewQueue.swift" Sources/PearlCore/ReviewQueue.swift
+            echo 'ERROR: broken protection guard escaped the test'
+            exit 1
+          fi
+          cp "$RUNNER_TEMP/ReviewQueue.swift" Sources/PearlCore/ReviewQueue.swift
+          grep 'Expectation failed' "$RUNNER_TEMP/mutation.log"
       - name: Install XcodeGen
         if: ${{ !inputs.tests_only }}
         run: brew install xcodegen

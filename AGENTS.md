@@ -7,10 +7,10 @@ Implementation authorized November 4, 2026: build the Pearl app, local similar p
 ## Accepted product decisions
 
 - Pearl is the chosen visual direction. Preserve the bright, quiet, rounded look, sage accent, generous spacing, and low barrier to entry.
-- Include on-device similar-photo grouping. Plan similar-video comparison as well, with its own validation and resource budget.
+- Include on-device similar-photo grouping. Include conservative five-frame similar-video comparison, with its own validation and resource budget. Support user-initiated continued background processing and system Live Activity on iOS 26+, with durable recovery and honest fallback on older iOS or denied execution.
 - Reuse the Thinking Orbs visual reference from Elsepin. It is a native library reference, not a reason to add a web runtime.
 - No account, subscription, ad, or server dependency for core cleanup.
-- Library, Clean Up, Albums are the proposed three main destinations. Keep deeper tools inside them.
+- Home, Clean Up, Albums are the main destinations. Home opens Swipe with month rows. Full-screen review uses Delete / Heart / Keep and direct drag feedback, following the November 4 screenshot references.
 - No automatic deletion. Keep a reversible decision queue, a review step, and PhotoKit's system confirmation.
 - Organize by media type, year, month, and optional day. Age alone is never evidence that a photo should be deleted.
 - Use background commands for setup. Do not take control of the user's mouse, keyboard, or everyday browser.

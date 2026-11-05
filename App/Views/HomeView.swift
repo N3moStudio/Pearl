@@ -3,6 +3,7 @@ import PearlCore
 
 struct LibraryView: View {
     @Environment(PearlModel.self) private var model
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var capacity: Int64 = 0
     @State private var available: Int64 = 0
     var body: some View {
@@ -22,12 +23,8 @@ struct LibraryView: View {
                         Label("Showing your selected photos", systemImage: "photo.badge.checkmark").font(.footnote).foregroundStyle(.secondary)
                     }
                 }
-                HStack(alignment: .top, spacing: 20) {
-                    Button { model.selectedTab = 1 } label: { HomeAction(title: "Smart cleanup", symbol: "sparkles") }
-                    NavigationLink { SwipeLibraryView() } label: { HomeAction(title: "Swipe", symbol: "hand.draw") }
-                        .accessibilityIdentifier("openSwipe")
-                    Button { model.selectedTab = 2 } label: { HomeAction(title: "Albums", symbol: "rectangle.stack") }
-                }.buttonStyle(.plain)
+                if typeSize.isAccessibilitySize { VStack(spacing: 14) { shortcuts }.buttonStyle(.plain) }
+                else { HStack(alignment: .top, spacing: 20) { shortcuts }.buttonStyle(.plain) }
                 if model.scanning {
                     Button { model.selectedTab = 1 } label: {
                         HStack {
@@ -37,7 +34,7 @@ struct LibraryView: View {
                         }.pearlCard()
                     }.buttonStyle(.plain)
                 }
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: typeSize.isAccessibilitySize ? 1 : 2), spacing: 10) {
                     media("Photos", symbol: "photo", items: model.items.filter { !$0.isVideo })
                     media("Videos", symbol: "play.rectangle", items: model.items.filter(\.isVideo))
                     NavigationLink { GroupList(title: "Similar photos", kind: .photo) } label: {
@@ -55,7 +52,7 @@ struct LibraryView: View {
         }.background {
             PearlStyle.canvas.ignoresSafeArea()
             VStack {
-                LinearGradient(colors: [PearlStyle.sage.opacity(0.16), .clear], startPoint: .topLeading, endPoint: .bottomTrailing).frame(height: 320)
+                LinearGradient(colors: [PearlStyle.sage.opacity(0.16), .clear], startPoint: .top, endPoint: .bottom).frame(height: 320)
                 Spacer()
             }.ignoresSafeArea()
         }
@@ -64,6 +61,12 @@ struct LibraryView: View {
             let disk = await DeviceStorage.read()
             capacity = disk.total; available = disk.free
         }
+    }
+    @ViewBuilder private var shortcuts: some View {
+        Button { model.selectedTab = 1 } label: { HomeAction(title: "Smart cleanup", symbol: "sparkles") }
+        NavigationLink { SwipeLibraryView() } label: { HomeAction(title: "Swipe", symbol: "hand.draw") }
+            .accessibilityIdentifier("openSwipe")
+        Button { model.selectedTab = 2 } label: { HomeAction(title: "Albums", symbol: "rectangle.stack") }
     }
     private func media(_ title: String, symbol: String, items: [MediaItem]) -> some View {
         NavigationLink { MediaGrid(title: title, items: items) } label: {
@@ -75,13 +78,24 @@ struct LibraryView: View {
 private struct HomeAction: View {
     let title: String
     let symbol: String
+    @Environment(\.dynamicTypeSize) private var typeSize
     var body: some View {
-        VStack(spacing: 10) {
-            Image(systemName: symbol).font(.system(size: 28, weight: .regular)).foregroundStyle(PearlStyle.sage)
-                .frame(width: 68, height: 68).background(.regularMaterial, in: Circle())
-                .overlay(Circle().strokeBorder(PearlStyle.sage.opacity(0.14)))
-            Text(title).font(.subheadline.weight(.medium)).foregroundStyle(.primary).multilineTextAlignment(.center)
-        }.frame(maxWidth: .infinity)
+        if typeSize.isAccessibilitySize {
+            HStack(spacing: 16) {
+                icon
+                Text(title).font(.subheadline.weight(.medium)).foregroundStyle(.primary).frame(maxWidth: .infinity, alignment: .leading)
+            }.pearlCard()
+        } else {
+            VStack(spacing: 10) {
+                icon
+                Text(title).font(.subheadline.weight(.medium)).foregroundStyle(.primary).multilineTextAlignment(.center)
+            }.frame(maxWidth: .infinity)
+        }
+    }
+    private var icon: some View {
+        Image(systemName: symbol).font(.system(size: 28, weight: .regular)).foregroundStyle(PearlStyle.sage)
+            .frame(width: 68, height: 68).background(.regularMaterial, in: Circle())
+            .overlay(Circle().strokeBorder(PearlStyle.sage.opacity(0.14)))
     }
 }
 

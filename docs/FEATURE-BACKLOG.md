@@ -85,7 +85,7 @@ Acceptance: every removal is inspectable and user-confirmed. A cancelled or fail
 - [x] S13 Preserve meaningful metadata and album membership during keeper decisions.
 - [ ] S14 Invalidate cached comparisons after edits, permission changes or API/model revision changes.
 - [ ] S15 Distinguish unavailable iCloud resources from a completed scan with no matches.
-- [ ] S16 Pause/resume deep scans and incrementally process new media.
+- [x] S16 Pause/resume deep scans and incrementally process new media.
 
 Acceptance: intentionally similar but distinct receipts, documents, sunsets and burst expressions are in the evaluation set. Similarity is presented as a suggestion; no unattended selection or deletion is permitted.
 
@@ -126,7 +126,7 @@ Acceptance: the app remains usable with the largest supported text sizes, VoiceO
 - [ ] V04 Handle trimmed, re-encoded, rotated and differently sized variants conservatively.
 - [x] V05 Show duration/resolution differences and preserve distinct audio/moments.
 - [x] V06 Preview both clips with scrubbing; do not infer equivalence from a poster frame.
-- [ ] V07 Explicit compute/iCloud-download controls and durable checkpoints.
+- [x] V07 Explicit pause/iCloud-download controls and durable checkpoints; background progress on supported iOS.
 - [ ] V08 Evaluate false matches and missed matches on real video variants before shipping.
 
 ## P1 — Smarter categories

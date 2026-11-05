@@ -235,4 +235,9 @@ struct ReviewSession: Identifiable {
     let title: String
     let items: [MediaItem]
     let position: Int
+    let positions: [String: Int]
+    init(title: String, items: [MediaItem], position: Int) {
+        self.title = title; self.items = items; self.position = position
+        positions = Dictionary(uniqueKeysWithValues: items.enumerated().map { ($0.element.id, $0.offset) })
+    }
 }

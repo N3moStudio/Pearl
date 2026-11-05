@@ -13,6 +13,7 @@ struct ReviewView: View {
     @State private var queue = false
     @State private var zoom: CGFloat = 1
     @State private var pan = CGSize.zero
+    @State private var reviewedCount = 0
     @GestureState(resetTransaction: Transaction(animation: .spring(duration: 0.28, bounce: 0.12))) private var drag = CGSize.zero
     @GestureState private var magnification: CGFloat = 1
     private let ink = Color.white
@@ -23,10 +24,9 @@ struct ReviewView: View {
         guard session.items.indices.contains(position) else { return nil }
         return model.item(session.items[position].id)
     }
-    private var reviewed: Int { session.items.filter { model.queue.reviewed.contains($0.id) }.count }
     private var undoAvailable: Bool {
         guard let id = model.queue.lastUndoID else { return false }
-        return session.items.contains { $0.id == id }
+        return session.positions[id] != nil
     }
     var body: some View {
         GeometryReader { proxy in
@@ -59,6 +59,8 @@ struct ReviewView: View {
         .background(Color.black.ignoresSafeArea()).foregroundStyle(ink).preferredColorScheme(.dark)
         .statusBarHidden().interactiveDismissDisabled()
         .sheet(isPresented: $queue) { NavigationStack { QueueView() } }
+        .onAppear { updateReviewedCount() }
+        .onChange(of: model.queue.reviewed) { _, _ in updateReviewedCount() }
         .onChange(of: position) { _, _ in zoom = 1; pan = .zero }
         .alert("Pearl", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
             Button("OK") { model.error = nil }
@@ -73,12 +75,12 @@ struct ReviewView: View {
                 .buttonStyle(PearlRoundButton()).accessibilityLabel("Close review").accessibilityIdentifier("closeReview")
             VStack(spacing: 4) {
                 Text(session.title).font(.headline).multilineTextAlignment(.center).lineLimit(2)
-                Text("\(min(position + 1, session.items.count)) of \(session.items.count) · \(Int(Double(reviewed) / Double(max(1, session.items.count)) * 100))%")
+                Text("\(min(position + 1, session.items.count)) of \(session.items.count) · \(Int(Double(reviewedCount) / Double(max(1, session.items.count)) * 100))%")
                     .font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
                     .accessibilityIdentifier("reviewProgress")
             }.frame(maxWidth: .infinity)
             Button {
-                if let id = model.undo(), let index = session.items.firstIndex(where: { $0.id == id }) { position = index }
+                if let id = model.undo(), let index = session.positions[id] { position = index }
             } label: { Image(systemName: "arrow.uturn.backward").font(.title3).frame(width: 48, height: 48) }
                 .buttonStyle(PearlRoundButton()).disabled(!undoAvailable || leaving)
                 .accessibilityLabel("Undo last choice").accessibilityIdentifier("undoReview")
@@ -144,7 +146,8 @@ struct ReviewView: View {
         ScrollViewReader { reader in
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 7) {
-                    ForEach(Array(session.items.enumerated()), id: \.element.id) { index, item in
+                    ForEach(session.items.indices, id: \.self) { index in
+                        let item = session.items[index]
                         Button {
                             guard !leaving else { return }; position = index
                         } label: {
@@ -200,6 +203,9 @@ struct ReviewView: View {
             var transaction = Transaction(); transaction.disablesAnimations = true
             withTransaction(transaction) { position += 1; exitOffset = .zero; leaving = false }
         }
+    }
+    private func updateReviewedCount() {
+        reviewedCount = session.items.reduce(0) { $0 + (model.queue.reviewed.contains($1.id) ? 1 : 0) }
     }
 }
 

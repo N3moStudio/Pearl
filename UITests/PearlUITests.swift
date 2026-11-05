@@ -8,6 +8,7 @@ final class PearlUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.navigationBars["Pearl"].waitForExistence(timeout: 20))
         XCTAssertTrue(app.tabBars.buttons["Clean Up"].isHittable)
+        app.swipeUp()
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Pearl-Large-Text-Dark"; screenshot.lifetime = .keepAlways; add(screenshot)
     }

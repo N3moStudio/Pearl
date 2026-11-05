@@ -2,6 +2,8 @@
 
 A calm, native iPhone app for browsing, organizing, and reviewing a large photo library in manageable pieces.
 
+**Current workflow (November 5, 2026): local development and pre-build checks only.** Stop before compilation, IPA packaging, CI, or remote operations unless the user later requests them. The existing local repository and remote configuration are preserved. The build receipt below describes the previously delivered version, not verification of future local changes.
+
 **Status: Pearl 0.2.1 built and verified on Codemagic: 14 core tests and 7 simulator UI tests passed.** The delivered IPA includes the preview repair, home/large-text/filmstrip polish, and deferred Photos permission handling from `8855a989`. Photo/video screenshot checks reject the known black-preview failure. The IPA is ready for personal sideload signing; physical iPhone checks remain pending. See the [0.2.1 verification receipt](docs/VERIFICATION-0.2.1.md) and [repeatable private build instructions](docs/FREE-BUILD.md).
 
 [Verification and IPA details](docs/VERIFICATION-0.2.1.md) · [Actual simulator screenshots](docs/SCREENSHOTS.md) · [First iPhone check](docs/DEVICE-CHECK.md)

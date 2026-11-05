@@ -2,7 +2,9 @@
 
 ## Current phase
 
-Implementation authorized November 4, 2026: build the Pearl app, local similar photo/video detection, core cleanup features, and a sideloadable IPA. Keep all code in this repository alongside the user's other repositories under `C:\Users\naith\Documents\GitHub`. Use background commands only. A private build repository and CI are part of IPA delivery; do not publish a public release.
+Implementation authorized November 4, 2026: develop the Pearl app, local similar photo/video detection, and core cleanup features. Keep all code in this repository alongside the user's other repositories under `C:\Users\naith\Documents\GitHub`. Use background commands only.
+
+The user's November 5, 2026 instruction supersedes the earlier automatic build/delivery workflow: make requested changes locally, complete applicable pre-build review and static checks, then stop before starting a build. Do not compile/package an IPA, start CI, push, fetch, or contact GitHub/Codemagic unless the user explicitly authorizes that later. The user reports their GitHub account is unavailable. Local commits are allowed; preserve the existing remote configuration and local history. Do not claim native build/test success for new source changes based on the older tested IPA.
 
 ## Accepted product decisions
 
@@ -25,8 +27,8 @@ Validate changes at the right level. Static analysis and conceptual images do no
 
 Protect real personal media and signing credentials. No personal-photo fixtures in Git, logs, or remote services. Keep any temporary source downloads under ignored `research/evidence/`.
 
-The authorized IPA build uses the private remote `N3moStudio/Pearl`. Do not make it public or publish a release without a request. Preserve the canonical local folder and GitHub Desktop registration.
+The existing private remote is `N3moStudio/Pearl`. Preserve it, the canonical local folder and GitHub Desktop registration. Remote operations and builds are paused under the current instruction above. Do not make the repository public or publish a release without a request.
 
 ## IPA delivery
 
-The user's November 5, 2026 instruction is to place the actual latest tested Pearl IPA in `C:\Users\naith\Desktop\ipa\My Projects (N3mo Studio)`. Keep only the current delivered Pearl IPA there, replacing older Pearl versions after the new tested artifact is available. Leave other projects' IPAs alone. Deliver only the `.ipa`; do not add checksum sidecars, ZIP archives, logs, screenshots, or reports to that folder or Downloads. Keep any needed engineering evidence inside the repository instead. Keep delivery replies brief and omit checksum details unless requested.
+If the user later authorizes building and delivery, place the actual latest tested Pearl IPA in `C:\Users\naith\Desktop\ipa\My Projects (N3mo Studio)`. Keep only the current delivered Pearl IPA there, replacing older Pearl versions after the new tested artifact is available. Leave the existing delivered IPA intact while working only on local source, and leave other projects' IPAs alone. Deliver only the `.ipa`; do not add checksum sidecars, ZIP archives, logs, screenshots, or reports to that folder or Downloads. Keep any needed engineering evidence inside the repository instead. Keep delivery replies brief and omit checksum details unless requested.

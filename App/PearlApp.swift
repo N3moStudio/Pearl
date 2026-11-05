@@ -10,8 +10,8 @@ struct PearlApp: App {
                 .preferredColorScheme(testAppearance)
                 .task { await model.start() }
                 .onChange(of: scenePhase) { _, phase in
-                    if phase != .active { model.stopScan() }
-                    else if model.ready { Task { await model.refresh() } }
+                    if phase == .background { model.enteredBackground() }
+                    else if phase == .active, model.ready { Task { await model.refresh() } }
                 }
         }
     }
@@ -30,15 +30,18 @@ struct RootView: View {
         @Bindable var model = model
         Group {
             if model.canRead {
-                TabView {
-                    Tab("Library", systemImage: "photo.on.rectangle") { destination { LibraryView() } }
-                    Tab("Clean Up", systemImage: "sparkles") { destination { CleanupView() } }
-                    Tab("Albums", systemImage: "rectangle.stack") { destination { AlbumsView() } }
+                TabView(selection: $model.selectedTab) {
+                    Tab("Home", systemImage: "square.grid.2x2", value: 0) { destination { LibraryView() } }
+                    Tab("Clean Up", systemImage: "sparkles", value: 1) { destination { CleanupView() } }
+                    Tab("Albums", systemImage: "rectangle.stack", value: 2) { destination { AlbumsView() } }
                 }
             } else { WelcomeView() }
         }
         .sheet(isPresented: $settings) { SettingsView() }
         .sheet(isPresented: $model.showQueue) { NavigationStack { QueueView() } }
+        .fullScreenCover(item: $model.reviewSession) { session in
+            ReviewView(session: session).interactiveDismissDisabled()
+        }
         .alert("Pearl", isPresented: Binding(get: { model.error != nil }, set: { if !$0 { model.error = nil } })) {
             Button("OK") { model.error = nil }
         } message: { Text(model.error ?? "") }

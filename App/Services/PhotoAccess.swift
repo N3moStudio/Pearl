@@ -61,6 +61,12 @@ enum PhotoAccess {
         return nil
     }
 
+    @concurrent static func setFavorite(_ id: String, favorite: Bool) async throws {
+        guard let item = asset(id), item.canPerform(.properties) else { throw PhotoError.changedSelection }
+        let changes: @Sendable () -> Void = { PHAssetChangeRequest(for: item).isFavorite = favorite }
+        try await PHPhotoLibrary.shared().performChanges(changes)
+    }
+
     @concurrent static func delete(_ ids: Set<String>) async throws {
         try Task.checkCancellation()
         let assets = PHAsset.fetchAssets(withLocalIdentifiers: Array(ids), options: nil)
@@ -88,18 +94,17 @@ final class VideoSource: @unchecked Sendable {
     private let asset: AVAsset
     init(_ asset: AVAsset) { self.asset = asset }
     @MainActor func player() -> AVPlayer { AVPlayer(playerItem: AVPlayerItem(asset: asset)) }
-    @concurrent func frames(duration: Double) async throws -> [Data] {
+    @concurrent func frames(duration: Double) async throws -> [CGImage] {
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
         generator.maximumSize = CGSize(width: 512, height: 512)
         generator.requestedTimeToleranceBefore = CMTime(seconds: 0.05, preferredTimescale: 600)
         generator.requestedTimeToleranceAfter = CMTime(seconds: 0.05, preferredTimescale: 600)
-        var images: [Data] = []
+        var images: [CGImage] = []
         for fraction in [0.1, 0.3, 0.5, 0.7, 0.9] {
             try Task.checkCancellation()
             let image = try await generator.image(at: CMTime(seconds: duration * fraction, preferredTimescale: 600)).image
-            guard let encoded = UIImage(cgImage: image).pngData() else { throw Fingerprints.ScanError.unavailable }
-            images.append(encoded)
+            images.append(image)
         }
         return images
     }

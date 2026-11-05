@@ -10,6 +10,11 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     var queue = ReviewQueue()
     var scan = ScanProgress()
     var scanning = false
+    var stoppingScan = false
+    var backgroundStatus = ""
+    var reviewSession: ReviewSession?
+    var selectedTab = 0
+    var favoriting: Set<String> = []
     var clearingCache = false
     var scanMessage = "Find a little more space."
     var loading = false
@@ -21,6 +26,9 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     var showQueue = false
     @ObservationIgnored private let store = ReviewStore()
     @ObservationIgnored private let scanner = SimilarityScanner()
+    @ObservationIgnored private let background = BackgroundScan()
+    @ObservationIgnored private var scanItems: [String: MediaItem] = [:]
+    @ObservationIgnored private var itemLookup: [String: MediaItem] = [:]
     @ObservationIgnored private var scanTask: Task<Void, Never>?
     @ObservationIgnored private var revision = 0
     @ObservationIgnored private var loadGeneration = 0
@@ -40,7 +48,16 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     }
     func start() async {
         guard !ready else { return }
-        do { queue = try await store.load(); ready = true; await refresh() }
+        do {
+            queue = try await store.load()
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--ui-test-clear-scan") { try await scanner.clear() }
+            if ProcessInfo.processInfo.arguments.contains("--ui-test-reset-review") { queue = ReviewQueue() }
+            #endif
+            ready = true; await refresh()
+            scan = await scanner.restore(items)
+            if scan.checked > 0 { scanMessage = scan.phase == .complete ? "Scan complete. You choose what stays." : "Your place is saved. Ready to resume." }
+        }
         catch { self.error = "Your saved review could not be opened. It has been left untouched. \(error.localizedDescription)" }
     }
     func requestAccess() async {
@@ -57,10 +74,10 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         async let collections = AlbumAccess.all()
         let (newItems, newAlbums) = await (fetched, collections)
         guard generation == loadGeneration else { return }
-        if items != newItems, scanning { stopScan() }
         let previousVersions = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0.modified) })
         let changed = Set(newItems.filter { previousVersions[$0.id] != nil && previousVersions[$0.id] != $0.modified }.map(\.id))
         items = newItems; albums = newAlbums; loading = false
+        itemLookup = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
         let accessible = Set(items.map(\.id))
         queue.reconcile(accessible: accessible)
         for item in items where item.favorite && queue.pending.contains(item.id) { queue.unstage(item.id) }
@@ -81,15 +98,33 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     }
     @discardableResult func decide(_ item: MediaItem, remove: Bool) -> Bool {
         guard ready, !deleting else { return false }
-        guard let current = items.first(where: { $0.id == item.id }) else {
+        guard let current = itemLookup[item.id] else {
             notice = "This item is no longer accessible. Skip it to continue your review."; return false
         }
         let accepted = queue.decide(current, remove: remove)
         if accepted { persist() }
-        else { notice = "Favorites and protected items stay safe. Unfavorite in Photos before considering removal." }
+        else { notice = "Favorites and protected items stay safe. Unfavorite with the heart before considering removal." }
         return accepted
     }
-    func undo() { guard !deleting else { return }; queue.undo(); persist() }
+    @discardableResult func undo() -> String? {
+        guard !deleting else { return nil }
+        let id = queue.lastUndoID; queue.undo(); persist(); return id
+    }
+    func item(_ id: String) -> MediaItem? { itemLookup[id] }
+    func openReview(_ items: [MediaItem], title: String, startID: String? = nil) {
+        guard !items.isEmpty else { return }
+        let position = startID.flatMap { id in items.firstIndex { $0.id == id } } ?? items.firstIndex { !queue.reviewed.contains($0.id) } ?? 0
+        reviewSession = ReviewSession(title: title, items: items, position: position)
+    }
+    func toggleFavorite(_ id: String) async {
+        guard let current = itemLookup[id], !favoriting.contains(id), !deleting else { return }
+        favoriting.insert(id); defer { favoriting.remove(id) }
+        do {
+            try await PhotoAccess.setFavorite(id, favorite: !current.favorite)
+            if !current.favorite { queue.unstage(id); persist() }
+            await refresh()
+        } catch { self.error = "Couldn't change this favorite. \(error.localizedDescription)" }
+    }
     func protect(_ id: String) { guard !deleting else { return }; queue.protect(id); persist() }
     func toggleProtection(_ id: String) {
         guard !deleting else { return }
@@ -113,36 +148,66 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         } catch { self.error = "Nothing was cleared from your review queue. \(error.localizedDescription)" }
     }
     func beginScan() {
-        guard canRead, !scanning, !clearingCache, !items.isEmpty else { return }
+        guard canRead, !scanning, scanTask == nil, !clearingCache, !items.isEmpty else { return }
         let generation = UUID(); scanGeneration = generation
-        scanning = true; scanMessage = "Checking on your iPhone…"
+        scanning = true; stoppingScan = false; scanMessage = "Checking on your iPhone…"
+        if background.request(start: { [weak self] in self?.runScan(generation: generation) }, expiration: { [weak self] in
+            self?.stopScan(message: "Background scan paused. Your place is saved.")
+        }) {
+            backgroundStatus = "You can leave Pearl. Track progress in the Live Activity."
+        } else {
+            backgroundStatus = "Background scanning isn't available right now. Other Pearl tabs work; leaving the app saves your place."
+            runScan(generation: generation)
+        }
+    }
+    private func runScan(generation: UUID) {
+        guard scanning, scanGeneration == generation else { background.finish(success: false); return }
         let input = items, network = allowCloud
+        scanItems = Dictionary(uniqueKeysWithValues: input.map { ($0.id, $0) })
         scanTask = Task {
+            var success = false
             do {
                 let final = try await scanner.scan(input, network: network) { [weak self] progress in
                     await self?.updateScan(progress, generation: generation)
                 }
                 guard scanGeneration == generation else { return }
-                scan = final; scanMessage = "Scan complete. You choose what stays."
+                updateScan(final, generation: generation); scanMessage = "Scan complete. You choose what stays."
+                success = true
             } catch is CancellationError {
                 guard scanGeneration == generation else { return }
-                scanMessage = "Scan paused. Your results are still here."
+                if !stoppingScan { scanMessage = "Scan paused. Your place is saved." }
             } catch {
                 guard scanGeneration == generation else { return }
                 scanMessage = error.localizedDescription
             }
-            if scanGeneration == generation { scanning = false; scanTask = nil }
+            if scanGeneration == generation {
+                background.finish(success: success)
+                scanning = false; stoppingScan = false; scanTask = nil
+            }
         }
     }
     private func updateScan(_ progress: ScanProgress, generation: UUID) {
-        guard generation == scanGeneration else { return }; scan = progress
+        guard generation == scanGeneration else { return }
+        var valid = progress
+        valid.groups = progress.groups.compactMap { group in
+            let ids = group.members.filter { id in
+                guard let original = scanItems[id], let current = itemLookup[id] else { return false }
+                return ScanRecord(item: original, hash: nil).matches(current)
+            }
+            return ids.count > 1 ? MatchGroup(kind: group.kind, members: ids) : nil
+        }
+        scan = valid; background.update(progress)
     }
-    func stopScan() {
+    func stopScan(message: String = "Scan paused. Your place is saved.") {
         guard scanning else { return }
-        scanGeneration = UUID()
-        scanTask?.cancel()
-        scanning = false
-        scanMessage = "Scan paused. Your results are still here."
+        stoppingScan = true; scanMessage = message
+        if let scanTask { scanTask.cancel() }
+        else { background.finish(success: false); scanning = false; stoppingScan = false }
+    }
+    func enteredBackground() {
+        guard scanning, !background.running else { return }
+        background.beginSaving()
+        stopScan(message: "Your place is saved. Resume when you return to Pearl.")
     }
     func clearCache() async {
         guard !clearingCache else { return }
@@ -163,4 +228,11 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         do { try await AlbumAccess.add(ids, to: album.id); notice = "Added to \(album.title). Items also remain in your library."; albums = await AlbumAccess.all() }
         catch { self.error = error.localizedDescription }
     }
+}
+
+struct ReviewSession: Identifiable {
+    let id = UUID()
+    let title: String
+    let items: [MediaItem]
+    let position: Int
 }

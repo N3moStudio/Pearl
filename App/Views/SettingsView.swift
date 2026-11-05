@@ -19,7 +19,7 @@ struct SettingsView: View {
                 Section {
                     Toggle("Allow iCloud downloads for scans", isOn: $model.allowCloud).disabled(model.scanning)
                 } header: { Text("On-device matching") } footer: {
-                    Text("Off by default each launch. When enabled, Apple may download originals using your connection. Analysis stays on this device. Keep Pearl open to scan; it pauses in the background, Low Power Mode, or excessive heat.")
+                    Text("Off by default each launch. Apple may download media when enabled; analysis stays on your device. On iOS 26+, a scan can continue outside Pearl with a system Live Activity when background processing is available. iOS may pause it, and force-quitting stops it. Earlier iOS saves your place when you leave. Low Power Mode or excessive heat pauses work.")
                 }
                 Section("Your data") {
                     Label("No account, analytics, or photo uploads", systemImage: "lock.shield")
@@ -28,7 +28,7 @@ struct SettingsView: View {
                     Text("Review choices stay on this iPhone. Clearing the cache keeps your review queue and original photos.").font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("About Pearl") {
-                    Text("Pearl 0.1.0 · N3mo Studio")
+                    Text("Pearl 0.2.0 · N3mo Studio")
                     Text("Exact matches compare single original resources. Live Photos, RAW pairs, and edited sets are excluded. Similarity uses a conservative shortlist, so it can miss matches. Video suggestions compare five frames, not sound or every frame.").font(.footnote).foregroundStyle(.secondary)
                     NavigationLink("Open-source notices") {
                         ScrollView { Text(notices)

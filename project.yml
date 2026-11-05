@@ -8,8 +8,8 @@ settings:
     SWIFT_VERSION: '6.0'
     SWIFT_STRICT_CONCURRENCY: complete
     TARGETED_DEVICE_FAMILY: '1,2'
-    MARKETING_VERSION: '0.1.0'
-    CURRENT_PROJECT_VERSION: '1'
+    MARKETING_VERSION: '0.2.0'
+    CURRENT_PROJECT_VERSION: '2'
 packages:
   PearlCore:
     path: .
@@ -42,6 +42,8 @@ targets:
         NSPhotoLibraryUsageDescription: Pearl organizes your library and finds similar photos and videos on your device. Only items you review and confirm are removed.
         NSPhotoLibraryAddUsageDescription: Pearl creates albums you choose in your photo library.
         PHPhotoLibraryPreventAutomaticLimitedAccessAlert: true
+        UIBackgroundModes: [processing]
+        BGTaskSchedulerPermittedIdentifiers: ['$(PRODUCT_BUNDLE_IDENTIFIER).scan.*']
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         ITSAppUsesNonExemptEncryption: false

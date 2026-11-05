@@ -10,21 +10,25 @@ struct CleanupView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 VStack(alignment: .leading, spacing: 15) {
-                    if model.scanning { OrbStatus(title: "Checking your library…") }
+                    if model.scanning { OrbStatus(title: model.stoppingScan ? "Saving your place…" : model.scan.detail) }
                     else { Label(model.scanMessage, systemImage: "leaf").foregroundStyle(.secondary) }
                     if model.scan.total > 0 {
-                        ProgressView(value: Double(model.scan.checked), total: Double(max(1, model.scan.total)))
-                        Text("\(model.scan.checked) of \(model.scan.total) checked · \(model.scan.exactChecked) originals hashed")
+                        ProgressView(value: model.scan.fraction)
+                        Text(model.scan.detail).accessibilityIdentifier("scanProgress")
                             .font(.footnote).foregroundStyle(.secondary)
+                        if model.scan.reused > 0 {
+                            Text("Reused \(model.scan.reused.formatted()) previous checks").font(.caption).foregroundStyle(.secondary)
+                        }
                     }
                     if model.scan.unavailable > 0 {
                         Text("\(model.scan.unavailable) items couldn't be analyzed. Some may need an iCloud download.").font(.footnote).foregroundStyle(.secondary)
                     }
-                    Button(model.scanning ? "Pause scan" : (model.scan.checked > 0 ? "Scan again" : "Find similar moments"),
+                    Button(model.scanning ? "Pause scan" : (model.scan.checked > 0 && model.scan.phase != .complete ? "Resume scan" : "Find similar moments"),
                            systemImage: model.scanning ? "pause" : "sparkles") {
                         if model.scanning { model.stopScan() } else { model.beginScan() }
-                    }.buttonStyle(.borderedProminent).controlSize(.large).disabled(model.items.isEmpty || model.clearingCache)
+                    }.buttonStyle(.borderedProminent).controlSize(.large).disabled(model.items.isEmpty || model.clearingCache || model.stoppingScan)
                         .accessibilityIdentifier("scanButton")
+                    if model.scanning { Text(model.backgroundStatus).font(.footnote).foregroundStyle(.secondary) }
                 }.pearlCard()
                 groupRow("Exact duplicates", subtitle: "Matching original files", kind: .exact, symbol: "square.on.square")
                 groupRow("Similar photos", subtitle: "Same moment. A few versions.", kind: .photo, symbol: "photo.stack")
@@ -35,7 +39,7 @@ struct CleanupView: View {
                 NavigationLink { MediaGrid(title: "Long videos", items: model.items.filter { $0.isVideo && $0.duration >= 60 }) } label: {
                     MediaRow(title: "Long videos", subtitle: "One minute or more", symbol: "film")
                 }.buttonStyle(.plain)
-                Text("Matching happens on your device. Similar doesn't mean identical. Live Photos and edited resource sets are excluded from exact matching.")
+                Text("Matching stays on your device. Similar doesn't mean identical. Original files are verified only for likely copies; Live Photos and edited sets are excluded. Results can miss matches.")
                     .font(.footnote).foregroundStyle(.secondary)
                 Text("You choose what stays.").font(.subheadline).foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(.vertical)
             }.padding(20).frame(maxWidth: 750).frame(maxWidth: .infinity)

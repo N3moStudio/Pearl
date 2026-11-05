@@ -5,6 +5,7 @@ import Photos
 import AVFoundation
 import Synchronization
 import CoreImage
+import CoreML
 import PearlCore
 
 struct Fingerprint: Codable, Sendable {
@@ -26,6 +27,14 @@ enum Fingerprints {
         let request = VNGenerateImageFeaturePrintRequest()
         request.revision = VNGenerateImageFeaturePrintRequestRevision2
         request.imageCropAndScaleOption = .scaleFit
+        // CPU-only work remains eligible for background processing with personal sideload signing.
+        // Do not silently use a GPU/Neural Engine without their background entitlements.
+        for (stage, devices) in try request.supportedComputeStageDevices {
+            guard let cpu = devices.first(where: { if case .cpu = $0 { return true }; return false }) else {
+                throw ScanError.unavailable
+            }
+            request.setComputeDevice(cpu, for: stage)
+        }
         try VNImageRequestHandler(cgImage: image).perform([request])
         guard let result = request.results?.first else { throw ScanError.unavailable }
         return result
@@ -34,8 +43,13 @@ enum Fingerprints {
         try NSKeyedArchiver.archivedData(withRootObject: observation, requiringSecureCoding: true)
     }
     static func distance(_ a: Data, _ b: Data) throws -> Float {
-        guard let lhs = try NSKeyedUnarchiver.unarchivedObject(ofClass: VNFeaturePrintObservation.self, from: a),
-              let rhs = try NSKeyedUnarchiver.unarchivedObject(ofClass: VNFeaturePrintObservation.self, from: b) else { throw ScanError.unavailable }
+        try distance(decode(a), decode(b))
+    }
+    static func decode(_ data: Data) throws -> VNFeaturePrintObservation {
+        guard let result = try NSKeyedUnarchiver.unarchivedObject(ofClass: VNFeaturePrintObservation.self, from: data) else { throw ScanError.unavailable }
+        return result
+    }
+    static func distance(_ lhs: VNFeaturePrintObservation, _ rhs: VNFeaturePrintObservation) throws -> Float {
         var distance: Float = 0
         try lhs.computeDistance(&distance, to: rhs)
         return distance
@@ -79,9 +93,8 @@ enum Fingerprints {
         var hash: UInt64 = 0
         if item.isVideo {
             guard let asset = await PhotoAccess.video(item.id, network: network) else { throw ScanError.unavailable }
-            for encoded in try await asset.frames(duration: item.duration) {
+            for frame in try await asset.frames(duration: item.duration) {
                 try Task.checkCancellation()
-                guard let frame = UIImage(data: encoded)?.cgImage else { throw ScanError.unavailable }
                 if prints.isEmpty { hash = perceptualHash(frame) }
                 prints.append(try archive(observation(frame)))
             }
@@ -92,11 +105,8 @@ enum Fingerprints {
             prints = [try archive(observation(image))]
         }
         try Task.checkCancellation()
-        // Failure to access an original must not discard an otherwise usable similarity print.
-        let exact = try? await exactDigest(item.id, network: network)
-        try Task.checkCancellation()
         return Fingerprint(version: Fingerprint.version, runtime: Fingerprint.runtimeKey,
-                           modified: item.modified, prints: prints, hash: hash, exact: exact)
+                           modified: item.modified, prints: prints, hash: hash, exact: nil)
     }
     enum ScanError: Error { case unavailable }
     private static func uprightImage(_ image: UIImage) -> CGImage? {
@@ -114,6 +124,6 @@ enum Fingerprints {
         }
         if orientation == .up { return raw }
         let oriented = CIImage(cgImage: raw).oriented(orientation)
-        return CIContext().createCGImage(oriented, from: oriented.extent)
+        return CIContext(options: [.useSoftwareRenderer: true]).createCGImage(oriented, from: oriented.extent)
     }
 }

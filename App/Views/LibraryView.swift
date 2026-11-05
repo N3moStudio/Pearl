@@ -1,101 +1,12 @@
 import SwiftUI
 import PearlCore
 
-struct LibraryView: View {
-    @Environment(PearlModel.self) private var model
-    @State private var oldest = false
-    private var years: [Int] { Array(Set(model.items.map { Calendar.current.component(.year, from: $0.date) })).sorted(by: oldest ? (<) : (>)) }
-    var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 22) {
-                Text("A little space, at your pace.").foregroundStyle(.secondary)
-                if model.loading { OrbStatus(title: "Opening your library…") }
-                if model.authorization == .limited {
-                    Label("Showing the photos you chose. Manage access in Settings.", systemImage: "photo.badge.checkmark").font(.footnote).foregroundStyle(.secondary)
-                }
-                if !model.remaining.isEmpty {
-                    NavigationLink {
-                        ReviewView(items: model.remaining, title: "Your next moments")
-                    } label: {
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack(spacing: 5) {
-                                ForEach(Array(model.remaining.prefix(3))) { item in
-                                    Thumbnail(id: item.id, modified: item.modified).frame(height: 100).clipShape(RoundedRectangle(cornerRadius: 16))
-                                }
-                            }
-                            HStack {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text("A few moments at a time").font(.headline).foregroundStyle(.primary)
-                                    Text("\(model.remaining.count) left to review").font(.subheadline).foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Image(systemName: "arrow.right.circle.fill").font(.title).foregroundStyle(PearlStyle.sage)
-                            }
-                        }.padding(16).background(PearlStyle.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 26))
-                    }.buttonStyle(.plain)
-                }
-                Text("Media").font(.title2.bold())
-                VStack(spacing: 10) {
-                    media("Photos", symbol: "photo", items: model.items.filter { !$0.isVideo })
-                    media("Videos", symbol: "play.rectangle", items: model.items.filter(\.isVideo))
-                    media("Screenshots", symbol: "viewfinder", items: model.items.filter(\.isScreenshot))
-                    media("Live Photos", symbol: "livephoto", items: model.items.filter(\.isLive))
-                    media("Favorites", symbol: "heart", items: model.items.filter(\.favorite))
-                }
-                HStack {
-                    Text("By date").font(.title2.bold())
-                    Spacer()
-                    Button(oldest ? "Oldest first" : "Newest first", systemImage: "arrow.up.arrow.down") { oldest.toggle() }
-                        .font(.subheadline)
-                }
-                ForEach(years, id: \.self) { year in
-                    let items = model.items.filter { Calendar.current.component(.year, from: $0.date) == year }
-                    NavigationLink {
-                        MonthView(year: year, items: items)
-                    } label: {
-                        MediaRow(title: String(year), subtitle: "\(items.count) moments", symbol: "calendar", previews: items)
-                    }.buttonStyle(.plain)
-                }
-                if model.items.isEmpty && !model.loading {
-                    ContentUnavailableView("A fresh start", systemImage: "photo", description: Text("Your accessible photos and videos will appear here."))
-                }
-            }.padding(20).frame(maxWidth: 750).frame(maxWidth: .infinity)
-        }.background(PearlStyle.canvas).navigationTitle("Your library").refreshable { await model.refresh() }
-    }
-    private func media(_ title: String, symbol: String, items: [MediaItem]) -> some View {
-        NavigationLink {
-            MediaGrid(title: title, items: items)
-        } label: { MediaRow(title: title, subtitle: "\(items.count) items", symbol: symbol, previews: items) }
-            .buttonStyle(.plain).accessibilityIdentifier("media\(title)")
-    }
-}
-
-struct MonthView: View {
-    let year: Int
-    let items: [MediaItem]
-    var body: some View {
-        let months = Dictionary(grouping: items) { Calendar.current.component(.month, from: $0.date) }
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(months.keys.sorted(by: >), id: \.self) { month in
-                    let entries = months[month] ?? []
-                    let title = entries.first?.date.formatted(.dateTime.month(.wide)) ?? "Month"
-                    NavigationLink { MediaGrid(title: title + " \(year)", items: entries) } label: {
-                        MediaRow(title: title, subtitle: "\(entries.count) moments", symbol: "calendar", previews: entries)
-                    }.buttonStyle(.plain)
-                }
-            }.padding(20).frame(maxWidth: 750).frame(maxWidth: .infinity)
-        }.background(PearlStyle.canvas).navigationTitle(String(year))
-    }
-}
-
 struct MediaGrid: View {
     let title: String
     let items: [MediaItem]
     @Environment(PearlModel.self) private var model
     @State private var selected: Set<String> = []
     @State private var selecting = false
-    @State private var preview: MediaItem?
     @State private var albumPicker = false
     @State private var oldest = false
     @State private var unreviewed = false
@@ -126,7 +37,7 @@ struct MediaGrid: View {
                     Button {
                         if selecting {
                             if !selected.insert(item.id).inserted { selected.remove(item.id) }
-                        } else { preview = item }
+                        } else { model.openReview(visible, title: title, startID: item.id) }
                     } label: {
                         Thumbnail(id: item.id, modified: item.modified).aspectRatio(1, contentMode: .fit)
                             .overlay(alignment: .bottomTrailing) {
@@ -169,9 +80,6 @@ struct MediaGrid: View {
                     }
                 }.font(.subheadline).padding().background(.regularMaterial)
             }
-        }
-        .navigationDestination(item: $preview) { item in
-            ReviewView(items: [item] + visible.filter { $0.id != item.id }, title: title)
         }
         .sheet(isPresented: $albumPicker) { AlbumPicker(ids: selected) }
     }

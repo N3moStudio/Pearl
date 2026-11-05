@@ -1,6 +1,7 @@
 import XCTest
 
 final class PearlUITests: XCTestCase {
+    override func setUp() { super.setUp(); continueAfterFailure = false }
     @MainActor func testLargeTextAndDarkAppearance() {
         let app = XCUIApplication()
         app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL", "--ui-test-dark"]
@@ -10,7 +11,7 @@ final class PearlUITests: XCTestCase {
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Pearl-Large-Text-Dark"; screenshot.lifetime = .keepAlways; add(screenshot)
     }
-    @MainActor func testLibraryReviewAndLocalScan() throws {
+    @MainActor func testLibraryReviewQueue() throws {
         let app = XCUIApplication(); app.launch()
         XCTAssertTrue(app.navigationBars["Your library"].waitForExistence(timeout: 20))
         let library = XCTAttachment(screenshot: app.screenshot()); library.name = "Pearl-Library"; library.lifetime = .keepAlways; add(library)
@@ -31,8 +32,10 @@ final class PearlUITests: XCTestCase {
         app.buttons["Keep"].firstMatch.tap()
         XCTAssertFalse(app.buttons["confirmRemoval"].isEnabled)
         app.buttons["Done"].tap()
-        app.navigationBars.buttons.element(boundBy: 0).tap()
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+    }
+    @MainActor func testLocalPhotoAndVideoScan() {
+        let app = XCUIApplication(); app.launch()
+        XCTAssertTrue(app.navigationBars["Your library"].waitForExistence(timeout: 20))
         app.tabBars.buttons["Clean Up"].tap()
         app.buttons["scanButton"].tap()
         let complete = app.staticTexts["Scan complete. You choose what stays."]
@@ -41,7 +44,8 @@ final class PearlUITests: XCTestCase {
         app.buttons["matchesphoto"].tap()
         XCTAssertTrue(app.buttons["matchGroup"].firstMatch.waitForExistence(timeout: 10))
         app.buttons["matchGroup"].firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["Nothing is selected for removal."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Review selection"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["Review selection"].isEnabled)
         let comparison = XCTAttachment(screenshot: app.screenshot()); comparison.name = "Pearl-Compare"; comparison.lifetime = .keepAlways; add(comparison)
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.navigationBars.buttons.element(boundBy: 0).tap()

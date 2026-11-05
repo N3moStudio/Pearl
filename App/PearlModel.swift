@@ -33,16 +33,18 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     @ObservationIgnored private var revision = 0
     @ObservationIgnored private var loadGeneration = 0
     @ObservationIgnored private var scanGeneration = UUID()
+    @ObservationIgnored private var observingPhotos = false
 
     var canRead: Bool { authorization == .authorized || authorization == .limited }
     var pendingItems: [MediaItem] { items.filter { queue.pending.contains($0.id) } }
     var remaining: [MediaItem] { items.filter { !queue.reviewed.contains($0.id) } }
 
-    override init() {
-        super.init()
-        PHPhotoLibrary.shared().register(self)
+    deinit {
+        let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+        if status == .authorized || status == .limited {
+            PHPhotoLibrary.shared().unregisterChangeObserver(self)
+        }
     }
-    deinit { PHPhotoLibrary.shared().unregisterChangeObserver(self) }
     nonisolated func photoLibraryDidChange(_ changeInstance: PHChange) {
         Task { @MainActor [weak self] in await self?.refresh() }
     }
@@ -66,7 +68,20 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     }
     func refresh() async {
         authorization = PHPhotoLibrary.authorizationStatus(for: .readWrite)
-        guard canRead else { stopScan(); items = []; itemLookup = [:]; albums = []; scan.groups = []; return }
+        guard canRead else {
+            if observingPhotos {
+                PHPhotoLibrary.shared().unregisterChangeObserver(self)
+                observingPhotos = false
+            }
+            loadGeneration += 1
+            loading = false
+            stopScan(); items = []; itemLookup = [:]; albums = []; scan.groups = []; return
+        }
+        // Register only after the person has chosen photo access on the welcome screen.
+        if !observingPhotos {
+            PHPhotoLibrary.shared().register(self)
+            observingPhotos = true
+        }
         loadGeneration += 1
         let generation = loadGeneration
         loading = true

@@ -204,6 +204,13 @@ final class PearlUITests: XCTestCase {
     }
 
     @MainActor private func launchReady(_ app: XCUIApplication) {
+        let permissionMonitor = addUIInterruptionMonitor(withDescription: "Synthetic Photos access") { alert in
+            let allow = alert.buttons["Allow Full Access"]
+            guard allow.exists else { return false }
+            allow.tap()
+            return true
+        }
+        defer { removeUIInterruptionMonitor(permissionMonitor) }
         app.launch()
         let access = app.buttons["chooseAccess"]
         let started = NSPredicate { _, _ in access.exists || app.tabBars.buttons["Home"].exists }
@@ -213,9 +220,11 @@ final class PearlUITests: XCTestCase {
         if access.exists {
             // A fresh runner may reinstall the app after simctl grants access.
             // Exercise actual onboarding against synthetic simulator media.
-            for _ in 0..<6 where !access.isHittable { app.swipeUp() }
-            XCTAssertTrue(access.isHittable)
-            access.tap()
+            for _ in 0..<6 where access.exists && !access.isHittable { app.swipeUp() }
+            if access.exists {
+                XCTAssertTrue(access.isHittable)
+                access.tap()
+            }
             let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
             let allow = springboard.buttons["Allow Full Access"]
             let appAllow = app.buttons["Allow Full Access"]

@@ -1,6 +1,6 @@
 # First iPhone check
 
-Import `Pearl-0.2.1.ipa` into your usual iOS sideloader and let it sign the app for your Apple account/device. Pearl requires iOS 18 or newer. The build's ad-hoc signature is an integrity signature, not personal provisioning. Keep the bundle ID consistent across upgrades to retain local review choices.
+Import `Pearl-0.2.1.ipa` into your usual iOS sideloader and let it sign the app for your Apple account/device. Pearl requires iOS 18 or newer. Build 4 is unsigned and needs personal signing/provisioning. Keep the bundle ID consistent across upgrades to retain local review choices.
 
 1. Start with a small selected library containing disposable copies. Open Photos, Videos, Screenshots and an older month. Use the grid's Filter menu to combine date and media type.
 2. Open a photo; try zoom, Delete, Heart, Keep, Undo, partial/reversed drags and the thumbnail filmstrip. Open Swipe, select a month, and confirm its title/count/percentage. Close only with the top-left button. Remove should only add to the review queue. Close and reopen Pearl to confirm saved decisions.

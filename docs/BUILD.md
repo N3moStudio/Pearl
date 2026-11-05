@@ -1,12 +1,12 @@
 # Pearl 0.2.1 implementation
 
-Authorized November 4, 2026. Canonical code: `C:\Users\naith\Documents\GitHub\Photo Cleaner`. Private remote: https://github.com/N3moStudio/Pearl. The existing GitHub Desktop registration is retained. No desktop input or browser control is required.
+Authorized November 4, 2026. Canonical code: `C:\Users\naith\Documents\GitHub\Photo Cleaner`. Private remote: https://gitlab.com/gajula.naithik/pearl.git. The GitHub remote is retained but unused. The existing GitHub Desktop registration is retained. No desktop input or browser control is required.
 
 ## Build
 
 Requires macOS and Xcode 26+ (CI uses Xcode 27.1), Swift 6, XcodeGen. Deployment target iOS 18. Run `swift test`, then `bash scripts/build.sh`. Or dispatch **Build Pearl** in Actions with `tests_only: false`.
 
-The build script generates an original Pearl icon and synthetic test media, generates the Xcode project, builds the device app, applies an ad-hoc integrity signature, constructs `Payload/Pearl.app`, builds for an iPhone simulator and executes UI tests. Test media is under ignored `build/fixtures`; it is never in the shipping app. Logs, screenshots, test results and the IPA are retained as private CI artifacts for seven days.
+The build script generates an original Pearl icon and synthetic test media, generates the Xcode project, builds for an iPhone simulator and executes UI tests, then builds an unsigned device app and constructs `Payload/Pearl.app`. Test media is under ignored `build/fixtures`; it is never in the shipping app. Logs, screenshots, test results and the IPA are retained as private Codemagic artifacts.
 
 The IPA is for personal signing with a compatible sideloader such as SideStore or AltStore. The ad-hoc build signature is not an Apple device provisioning signature. Personal Apple signing/provisioning and installation happen through the user's chosen sideloader. No Apple credentials are bundled.
 
@@ -42,7 +42,7 @@ On iOS 26+, an explicit scan button requests `BGContinuedProcessingTask` with a 
 
 The home screen uses device storage (not an invented photo-library size), three direct entry points, and media tiles. Swipe opens months with progress and year/order filters. Review is a fixed full-screen presentation, with a title/count/percentage, close/undo, a tappable filmstrip, and Delete / Heart / Keep. The heart changes the real PhotoKit favorite flag. Swipes follow the finger and only commit on release. Pinch/double-tap zoom, video playback and a protection context menu remain available. Delete stages a reversible choice; the final queue and Apple confirmation remain mandatory.
 
-Core tests cover reversible choices, favorites/protected items, stale IDs, deletion completion, persistence round trips, complete-link distances, five-frame/duration gates, cross-date candidates and shortlist bounds. CI also mutates the favorite guard and requires the relevant test to fail before restoring the original source.
+Core tests cover reversible choices, favorites/protected items, stale IDs, deletion completion, persistence round trips, complete-link distances, five-frame/duration gates, cross-date candidates and shortlist bounds. The retained GitHub workflow also has controlled mutation checks; these are not part of the current Codemagic workflow.
 
 Simulator UI tests use synthetic photos and re-encoded videos to exercise browsing, queue/undo, local scanning and unselected comparison groups. They do not prove real-library precision, physical-device battery/memory behavior, iCloud edge cases, Apple signing, or every accessibility setting. These remain device acceptance checks.
 
@@ -54,4 +54,4 @@ Simulator UI tests use synthetic photos and re-encoded videos to exercise browsi
 
 ## Source review
 
-Main-agent review covers deletion authorization, live favorites, permission changes, preserved review data, phase completion, cache invalidation, actor confinement, stale task callbacks, background expiration, gesture cancellation, and accessibility alternatives. Synthetic 10,001-item tests validate metadata recovery and retained exact candidates; they are not a 10,000-photo inference benchmark. CI mutation checks require broken favorite protection and edited-photo invalidation to fail their relevant tests.
+Main-agent review covers deletion authorization, live favorites, permission changes, preserved review data, phase completion, cache invalidation, actor confinement, stale task callbacks, background expiration, gesture cancellation, and accessibility alternatives. Synthetic 10,001-item tests validate metadata recovery and retained exact candidates; they are not a 10,000-photo inference benchmark. Historical mutation checks are recorded separately from the current Codemagic test result.

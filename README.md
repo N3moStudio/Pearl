@@ -2,7 +2,7 @@
 
 A calm, native iPhone app for browsing, organizing, and reviewing a large photo library in manageable pieces.
 
-**Current workflow (November 5, 2026): local development and pre-build checks only.** Stop before compilation, IPA packaging, CI, or remote operations unless the user later requests them. The existing local repository and remote configuration are preserved. The build receipt below describes the previously delivered version, not verification of future local changes.
+**Current workflow (November 5, 2026): private GitLab hosting and Codemagic's free personal M2 cloud Mac.** The user authorized tests, an unsigned IPA build and delivery using CLI/API access only. The same local checkout is retained; GitHub is suspended. No paid billing, browser automation, desktop control, or Tendelm build cancellation. Build 4 is being prepared; the receipt below describes the previously delivered build 3 until fresh checks complete.
 
 **Status: Pearl 0.2.1 built and verified on Codemagic: 14 core tests and 7 simulator UI tests passed.** The delivered IPA includes the preview repair, home/large-text/filmstrip polish, and deferred Photos permission handling from `8855a989`. Photo/video screenshot checks reject the known black-preview failure. The IPA is ready for personal sideload signing; physical iPhone checks remain pending. See the [0.2.1 verification receipt](docs/VERIFICATION-0.2.1.md) and [repeatable private build instructions](docs/FREE-BUILD.md).
 
@@ -38,6 +38,6 @@ Latest tested IPA delivery folder: `C:\Users\naith\Desktop\ipa\My Projects (N3mo
 
 The folder is registered in GitHub Desktop's local repository list. Setup used background operations and did not take over the mouse, keyboard or active window.
 
-Private source/build remote: [N3moStudio/Pearl](https://github.com/N3moStudio/Pearl). XcodeGen produces the native project from `project.yml`. Codemagic compiles the app on a Mac, runs core and simulator checks, then packages an ad-hoc IPA for personal re-signing. The manual GitHub Actions workflow remains available but its account billing block is unresolved. Signing credentials and personal media are never stored in this repository.
+Active private source/build remote: [gajula.naithik/pearl on GitLab](https://gitlab.com/gajula.naithik/pearl). The existing GitHub remote is preserved but unused. XcodeGen produces the native project from `project.yml`. Codemagic runs core and simulator checks, then builds and packages an unsigned arm64 IPA for personal signing. GitLab CI/CD and Pages are disabled. Signing credentials and personal media are never stored in this repository.
 
 Research date: November 4, 2026, America/Los_Angeles. Sources are linked next to their claims. This is a broad survey, not an exhaustive census of every photo app.

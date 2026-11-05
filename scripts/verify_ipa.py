@@ -16,7 +16,7 @@ with zipfile.ZipFile(ipa) as archive:
     info = plistlib.loads(archive.read(root + 'Info.plist'))
     assert info['CFBundleIdentifier'] == 'com.n3mostudio.pearl'
     assert info['CFBundleShortVersionString'] == '0.2.1'
-    assert info['CFBundleVersion'] == '3'
+    assert info['CFBundleVersion'] == '4'
     assert 'processing' in info['UIBackgroundModes']
     assert info['BGTaskSchedulerPermittedIdentifiers'] == ['com.n3mostudio.pearl.scan.*']
     assert info['MinimumOSVersion'] == '18.0'
@@ -25,7 +25,15 @@ with zipfile.ZipFile(ipa) as archive:
     binary = archive.read(root + info['CFBundleExecutable'])
     magic, cpu = struct.unpack('<II', binary[:8])
     assert magic == 0xfeedfacf and cpu == 0x100000c, 'Expected arm64 Mach-O'
-    assert root + '_CodeSignature/CodeResources' in names
+    assert not any('/_CodeSignature/' in n for n in names), 'Expected unsigned payload'
+    # No embedded signature command in the app's 64-bit Mach-O executable.
+    command_count = struct.unpack_from('<I', binary, 16)[0]
+    command_offset = 32
+    for _ in range(command_count):
+        command, command_size = struct.unpack_from('<II', binary, command_offset)
+        assert command_size >= 8 and command_offset + command_size <= len(binary)
+        assert command != 0x1d, 'Expected no LC_CODE_SIGNATURE in unsigned executable'
+        command_offset += command_size
     notices = archive.read(root + 'OpenSourceNotices.txt').decode()
     assert 'MIT License' in notices and 'Jakub Antalik' in notices
     privacy = plistlib.loads(archive.read(root + 'PrivacyInfo.xcprivacy'))
@@ -34,5 +42,6 @@ with zipfile.ZipFile(ipa) as archive:
 print(json.dumps({'path': str(ipa.resolve()), 'bytes': ipa.stat().st_size,
                   'sha256': hashlib.sha256(ipa.read_bytes()).hexdigest(),
                   'bundle': info['CFBundleIdentifier'], 'version': info['CFBundleShortVersionString'],
+                  'build': info['CFBundleVersion'],
                   'minimum_ios': info['MinimumOSVersion'], 'architecture': 'arm64',
-                  'signature': 'ad-hoc; personal sideload signing required'}, indent=2))
+                  'signature': 'unsigned; personal sideload signing required'}, indent=2))

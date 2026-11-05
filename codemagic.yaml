@@ -1,5 +1,5 @@
-# Optional manual fallback. Connecting this private repo to Codemagic is a
-# separate user action. No automatic triggers, publishing or signing secrets.
+# Private GitLab source; manually started personal-account M2 builds only.
+# No automatic triggers, publishing, billing changes or signing secrets.
 workflows:
   pearl-private-ipa:
     name: Pearl private IPA and simulator checks
@@ -11,14 +11,26 @@ workflows:
       - name: Check toolchain and install XcodeGen
         script: |
           set -euo pipefail
+          if pgrep -lx xcodebuild; then
+            echo 'An existing Xcode build needs review before another invocation.'
+            exit 1
+          else
+            inventory_status=$?
+            [[ "$inventory_status" == 1 ]] || exit "$inventory_status"
+          fi
           xcodebuild -version
           command -v xcodegen >/dev/null || brew install xcodegen
       - name: Core tests
-        script: swift test
-      - name: Build IPA and run simulator checks
+        script: |
+          set -euo pipefail
+          mkdir -p build
+          swift test > build/core-tests.log 2>&1 || { tail -100 build/core-tests.log; exit 1; }
+          tail -35 build/core-tests.log
+      - name: Run simulator checks and build unsigned IPA
         script: bash scripts/build.sh
     artifacts:
       - build/*.ipa
       - build/*.log
+      - build/*.json
       - build/*.xcresult
       - build/screenshots/**

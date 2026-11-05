@@ -21,19 +21,6 @@ run_build() {
   fi
   grep -E 'warning:|Executed|TEST SUCCEEDED|BUILD SUCCEEDED' "$log" | tail -20 || true
 }
-run_build build/device.log xcodebuild -project Pearl.xcodeproj -scheme Pearl -configuration Release \
-  -destination 'generic/platform=iOS' -derivedDataPath build/DerivedData \
-  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY='' build
-app='build/DerivedData/Build/Products/Release-iphoneos/Pearl.app'
-test -s "$app/OpenSourceNotices.txt"
-test -s "$app/PrivacyInfo.xcprivacy"
-codesign --force --sign - "$app"
-codesign --verify --deep --strict "$app"
-mkdir -p build/package/Payload
-ditto "$app" build/package/Payload/Pearl.app
-(cd build/package && zip -qry ../Pearl-0.2.1.ipa Payload)
-shasum -a 256 build/Pearl-0.2.1.ipa
-python3 scripts/verify_ipa.py build/Pearl-0.2.1.ipa
 udid=$(xcrun simctl list devices available -j | python3 -c 'import sys,json; d=json.load(sys.stdin); print(next(v["udid"] for a in d["devices"].values() for v in a if "iPhone" in v["name"]))')
 xcrun simctl boot "$udid" || true
 xcrun simctl bootstatus "$udid" -b
@@ -48,4 +35,20 @@ run_build build/ui-tests.log xcodebuild -project Pearl.xcodeproj -scheme Pearl -
   -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1 \
   -resultBundlePath build/UI.xcresult test-without-building || test_status=$?
 xcrun xcresulttool export attachments --path build/UI.xcresult --output-path build/screenshots
-exit "$test_status"
+[[ "$test_status" == 0 ]] || exit "$test_status"
+
+# Only produce a deliverable after the simulator checks succeed.
+run_build build/device.log xcodebuild -project Pearl.xcodeproj -scheme Pearl -configuration Release \
+  -destination 'generic/platform=iOS' -derivedDataPath build/DerivedData \
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY='' build
+app='build/DerivedData/Build/Products/Release-iphoneos/Pearl.app'
+test -s "$app/OpenSourceNotices.txt"
+test -s "$app/PrivacyInfo.xcprivacy"
+# Remove any linker-generated ad-hoc signature; the user's sideloader signs it.
+if codesign -d "$app" >/dev/null 2>&1; then codesign --remove-signature "$app"; fi
+if codesign -d "$app" >/dev/null 2>&1; then echo 'Expected an unsigned app'; exit 1; fi
+mkdir -p build/package/Payload
+ditto "$app" build/package/Payload/Pearl.app
+(cd build/package && zip -qry ../Pearl-0.2.1.ipa Payload)
+python3 scripts/verify_ipa.py build/Pearl-0.2.1.ipa > build/package-verification.json
+cat build/package-verification.json

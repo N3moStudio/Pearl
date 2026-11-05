@@ -2,9 +2,9 @@
 
 A calm, native iPhone app for browsing, organizing, and reviewing a large photo library in manageable pieces.
 
-**Status: Pearl 0.2.1 preview repair and final polish are saved privately, but GitHub blocked the fresh build before compilation.** All 14 old runs were deleted first as requested; the account billing block remains. The last delivered IPA is still 0.2.0 from `85036ecf` (14 core + 6 simulator tests); it does not contain these fixes. See the [0.2.1 build attempt](docs/VERIFICATION-0.2.1.md), [previous IPA verification](docs/VERIFICATION.md), and [prepared free build alternative](docs/FREE-BUILD.md).
+**Status: Pearl 0.2.1 built and verified on Codemagic: 14 core tests and 7 simulator UI tests passed.** The delivered IPA includes the preview repair, home/large-text/filmstrip polish, and deferred Photos permission handling from `8855a989`. Photo/video screenshot checks reject the known black-preview failure. The IPA is ready for personal sideload signing; physical iPhone checks remain pending. See the [0.2.1 verification receipt](docs/VERIFICATION-0.2.1.md) and [repeatable private build instructions](docs/FREE-BUILD.md).
 
-[Verification and IPA details](docs/VERIFICATION.md) · [Actual simulator screenshots](docs/SCREENSHOTS.md) · [First iPhone check](docs/DEVICE-CHECK.md)
+[Verification and IPA details](docs/VERIFICATION-0.2.1.md) · [Actual simulator screenshots](docs/SCREENSHOTS.md) · [First iPhone check](docs/DEVICE-CHECK.md)
 
 The user selected the **Pearl visual direction**: warm white, sage accents, rounded shapes, generous spacing, native system glass, textured loading placeholders, and small Thinking Orbs. The first app uses Pearl as its name and `com.n3mostudio.pearl` as its bundle ID, with iOS 18 as the baseline.
 
@@ -34,6 +34,6 @@ Canonical local repository: `C:\Users\naith\Documents\GitHub\Photo Cleaner`, alo
 
 The folder is registered in GitHub Desktop's local repository list. Setup used background operations and did not take over the mouse, keyboard or active window.
 
-Private source/build remote: [N3moStudio/Pearl](https://github.com/N3moStudio/Pearl). XcodeGen produces the native project from `project.yml`. GitHub Actions compiles the app on a Mac, runs core and simulator checks, then packages an ad-hoc IPA for personal re-signing. Signing credentials and personal media are never stored in this repository.
+Private source/build remote: [N3moStudio/Pearl](https://github.com/N3moStudio/Pearl). XcodeGen produces the native project from `project.yml`. Codemagic compiles the app on a Mac, runs core and simulator checks, then packages an ad-hoc IPA for personal re-signing. The manual GitHub Actions workflow remains available but its account billing block is unresolved. Signing credentials and personal media are never stored in this repository.
 
 Research date: November 4, 2026, America/Los_Angeles. Sources are linked next to their claims. This is a broad survey, not an exhaustive census of every photo app.

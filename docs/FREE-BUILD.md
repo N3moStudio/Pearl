@@ -1,6 +1,8 @@
 # Private builds and free usage
 
-Pearl stays private. Open **Actions → Build Pearl → Run workflow** on `main`, leave **Run core tests only** unchecked, then download the **Pearl** artifact after a successful run. The artifact contains `Pearl-0.2.1.ipa`, saved logs, test results and simulator screenshots. Re-sign the IPA using your existing personal sideload workflow; no paid Apple certificate is needed to produce this unsigned/personal-signing build.
+Pearl stays private. The user's personal Codemagic account is connected to `N3moStudio/Pearl`. Open [Pearl builds](https://codemagic.io/builds?app_id=6aec14d6c73110160e3cd00e), choose **Start new build**, select branch `main` and **Pearl private IPA and simulator checks**, then start it. After all checks pass, download `Pearl-0.2.1.ipa` from **Artifacts**. The accompanying ZIP contains logs, test results and simulator screenshots. Re-sign the IPA using your existing personal sideload workflow; no paid Apple certificate is needed to produce this ad-hoc build.
+
+GitHub Actions remains available at **Actions → Build Pearl → Run workflow**, with **Run core tests only** unchecked for an IPA. It currently rejects jobs because of the repository owner's billing/spending-limit block. Codemagic is the independent hosted build path; it does not remove that GitHub block.
 
 The workflow uses the standard Apple Silicon `macos-26` runner and keeps artifacts for three days. It uses the repository owner's included private-repository allowance. This is free only while that allowance remains and the account is eligible to run jobs. The previous `xcode-27` label was also a standard runner; changing labels does not fix an account billing block. No spending limits, payment methods or repository visibility are changed by this project.
 
@@ -12,7 +14,7 @@ If GitHub blocks hosted jobs, a Mac you already have can run `swift test` and `b
 
 Codemagic's personal plan currently includes **500 macOS M2 minutes per month**, reset on the first. Its free allowance is for an individual account, not a Team. Its build service can read private GitHub repositories after you explicitly grant access.
 
-An optional, manual-only `codemagic.yaml` is ready in the repository. It uses an M2 runner, Xcode 26.6, core tests, and the existing native build/simulator/package script. To use it, sign in to a personal Codemagic account, connect only `N3moStudio/Pearl`, select `main` and **Pearl private IPA and simulator checks**, and start the build. Keep billing disabled to avoid paid overages. Download the artifact after the checks pass and re-sign it using your sideloader. This configuration has been syntax-checked but has not run on Codemagic. No account was created, no repository access was granted, and no source was sent there during this task.
+The manual-only `codemagic.yaml` uses an M2 runner, Xcode 26.6, core tests, and the existing native build/simulator/package script. The user created the personal account and connected GitHub; builds were then launched through ChatGPT's built-in browser. Native app and simulator compilation have run successfully there. See [the current verification receipt](VERIFICATION-0.2.1.md) for the exact tested revision and results. The workflow has no publishing, email, automatic trigger, signing credential, or SSH requirement. No payment method or spending limit was changed. The free allowance is finite, and concurrent projects share it.
 
 - [Codemagic personal free allowance](https://docs.codemagic.io/billing/pricing/)
 - [Repository access and getting started](https://docs.codemagic.io/getting-started/about-codemagic/)

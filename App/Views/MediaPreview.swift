@@ -21,7 +21,7 @@ struct MediaPreview: View {
                     .accessibilityValue(playback.ready ? "Ready" : "Loading")
             }
             Thumbnail(id: item.id, size: 1600, modified: item.modified, fit: true,
-                      network: model.allowCloud || download, showStatus: true)
+                      network: model.allowCloud || download, showStatus: !item.isVideo)
                 .opacity(playback.ready ? 0 : 1)
                 .allowsHitTesting(!playback.ready)
             if item.isVideo && !playback.ready {

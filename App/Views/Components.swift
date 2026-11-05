@@ -111,7 +111,7 @@ struct Thumbnail: View {
             loadedID = id; finished = false
             let key = "\(id)-\(size)-\(modified.timeIntervalSince1970)" as NSString
             if let cached = ThumbnailCache.images.object(forKey: key) { image = cached; finished = true; return }
-            if showStatus && image == nil {
+            if fit && size > 300 && image == nil {
                 let poster = await PhotoAccess.image(id, size: 300)
                 guard !Task.isCancelled else { return }
                 image = poster

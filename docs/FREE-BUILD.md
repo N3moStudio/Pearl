@@ -8,6 +8,16 @@ Deleting old workflow runs removes their logs/artifacts and can reduce future st
 
 If GitHub blocks hosted jobs, a Mac you already have can run `swift test` and `bash scripts/build.sh` locally with Xcode 26 or newer and XcodeGen installed. A private, trusted self-hosted Mac runner also avoids GitHub-hosted compute charges. Windows alone cannot compile this native iOS app. There is no promise of unlimited free private macOS hosting and no public-repository workaround here.
 
+## Free hosted alternative
+
+Codemagic's personal plan currently includes **500 macOS M2 minutes per month**, reset on the first. Its free allowance is for an individual account, not a Team. Its build service can read private GitHub repositories after you explicitly grant access.
+
+An optional, manual-only `codemagic.yaml` is ready in the repository. It uses an M2 runner, Xcode 26.6, core tests, and the existing native build/simulator/package script. To use it, sign in to a personal Codemagic account, connect only `N3moStudio/Pearl`, select `main` and **Pearl private IPA and simulator checks**, and start the build. Keep billing disabled to avoid paid overages. Download the artifact after the checks pass and re-sign it using your sideloader. This configuration has been syntax-checked but has not run on Codemagic. No account was created, no repository access was granted, and no source was sent there during this task.
+
+- [Codemagic personal free allowance](https://docs.codemagic.io/billing/pricing/)
+- [Repository access and getting started](https://docs.codemagic.io/getting-started/about-codemagic/)
+- [Manual YAML workflows and M2 instance configuration](https://docs.codemagic.io/yaml-basic-configuration/yaml-getting-started/)
+
 Sources checked November 4, 2026:
 - [GitHub Actions billing and included allowances](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
 - [Standard runner images and labels](https://github.com/actions/runner-images)

@@ -1,5 +1,7 @@
 # Pearl 0.2.0 delivery
 
+**Historical receipt.** All 14 prior GitHub runs, including the URLs below, were deleted at the user's request before a fresh 0.2.1 attempt. The delivered IPA, local logs and committed screenshots remain preserved. See [the current 0.2.1 status](VERIFICATION-0.2.1.md); no new IPA has been built.
+
 Built November 4, 2026 (America/Los_Angeles). The delivered IPA is from tested source commit `85036ecf` in the private [N3moStudio/Pearl repository](https://github.com/N3moStudio/Pearl). It includes the home/month/full-screen review redesign, true PhotoKit favorites, direct-drag swipes, faster two-phase local matching, durable scan recovery, and iOS 26+ continued-processing integration.
 
 - **IPA:** `C:\Users\naith\Downloads\Pearl-0.2.0.ipa`

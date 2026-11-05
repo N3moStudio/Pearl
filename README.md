@@ -2,7 +2,7 @@
 
 A calm, native iPhone app for browsing, organizing, and reviewing a large photo library in manageable pieces.
 
-**Status: Pearl 0.2.1 preview repair and final polish are ready for a fresh private build.** The last delivered IPA is still 0.2.0 from `85036ecf` (14 core + 6 simulator tests); it does not contain these fixes. See the exact [verification boundaries](docs/VERIFICATION.md) and [free build options](docs/FREE-BUILD.md).
+**Status: Pearl 0.2.1 preview repair and final polish are saved privately, but GitHub blocked the fresh build before compilation.** All 14 old runs were deleted first as requested; the account billing block remains. The last delivered IPA is still 0.2.0 from `85036ecf` (14 core + 6 simulator tests); it does not contain these fixes. See the [0.2.1 build attempt](docs/VERIFICATION-0.2.1.md), [previous IPA verification](docs/VERIFICATION.md), and [prepared free build alternative](docs/FREE-BUILD.md).
 
 [Verification and IPA details](docs/VERIFICATION.md) · [Actual simulator screenshots](docs/SCREENSHOTS.md) · [First iPhone check](docs/DEVICE-CHECK.md)
 

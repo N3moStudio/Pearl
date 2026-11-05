@@ -1,0 +1,24 @@
+# Optional manual fallback. Connecting this private repo to Codemagic is a
+# separate user action. No automatic triggers, publishing or signing secrets.
+workflows:
+  pearl-private-ipa:
+    name: Pearl private IPA and simulator checks
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      xcode: "26.6"
+    scripts:
+      - name: Check toolchain and install XcodeGen
+        script: |
+          set -euo pipefail
+          xcodebuild -version
+          command -v xcodegen >/dev/null || brew install xcodegen
+      - name: Core tests
+        script: swift test
+      - name: Build IPA and run simulator checks
+        script: bash scripts/build.sh
+    artifacts:
+      - build/*.ipa
+      - build/*.log
+      - build/*.xcresult
+      - build/screenshots/**

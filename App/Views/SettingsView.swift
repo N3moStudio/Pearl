@@ -30,13 +30,18 @@ struct SettingsView: View {
                     Text("Pearl 0.1.0 · N3mo Studio")
                     Text("Exact matches compare single original resources. Live Photos, RAW pairs, and edited sets are excluded. Similarity uses a conservative shortlist, so it can miss matches. Video suggestions compare five frames, not sound or every frame.").font(.footnote).foregroundStyle(.secondary)
                     NavigationLink("Open-source notices") {
-                        ScrollView { Text((try? String(contentsOf: Bundle.main.url(forResource: "OpenSourceNotices", withExtension: "txt")!, encoding: .utf8)) ?? "ThinkingOrbsKit · MIT")
+                        ScrollView { Text(notices)
                             .font(.footnote).padding() }.navigationTitle("Notices")
                     }
                 }
             }.navigationTitle("Settings").toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
                 .sheet(isPresented: $limitedPicker, onDismiss: { Task { await model.refresh() } }) { LimitedLibraryEditor() }
         }
+    }
+    private var notices: String {
+        guard let url = Bundle.main.url(forResource: "OpenSourceNotices", withExtension: "txt"),
+              let text = try? String(contentsOf: url, encoding: .utf8) else { return "ThinkingOrbsKit · MIT · Jakub Antalik" }
+        return text
     }
 }
 

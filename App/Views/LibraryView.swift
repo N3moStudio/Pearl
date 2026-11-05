@@ -99,9 +99,21 @@ struct MediaGrid: View {
     @State private var albumPicker = false
     @State private var oldest = false
     @State private var unreviewed = false
+    @State private var mediaType = "All media"
+    @State private var favoritesOnly = false
     private var visible: [MediaItem] {
         let accessible = Set(model.items.map(\.id))
-        return items.filter { accessible.contains($0.id) && (!unreviewed || !model.queue.reviewed.contains($0.id)) }
+        return items.filter { item in
+            let typeMatches = switch mediaType {
+            case "Photos": !item.isVideo
+            case "Videos": item.isVideo
+            case "Screenshots": item.isScreenshot
+            case "Live Photos": item.isLive
+            default: true
+            }
+            return accessible.contains(item.id) && (!unreviewed || !model.queue.reviewed.contains(item.id)) &&
+                (!favoritesOnly || item.favorite) && typeMatches
+        }
             .sorted { oldest ? $0.date < $1.date : $0.date > $1.date }
     }
     var body: some View {
@@ -138,6 +150,10 @@ struct MediaGrid: View {
                 Menu("Filter", systemImage: "line.3.horizontal.decrease") {
                     Toggle("Oldest first", isOn: $oldest)
                     Toggle("Not reviewed yet", isOn: $unreviewed)
+                    Toggle("Favorites only", isOn: $favoritesOnly)
+                    Picker("Media type", selection: $mediaType) {
+                        ForEach(["All media", "Photos", "Videos", "Screenshots", "Live Photos"], id: \.self) { Text($0) }
+                    }
                 }
             }
         }

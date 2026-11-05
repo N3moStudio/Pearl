@@ -1,8 +1,10 @@
 import Vision
+import UIKit
 import CryptoKit
 import Photos
 import AVFoundation
 import Synchronization
+import CoreImage
 import PearlCore
 
 struct Fingerprint: Codable, Sendable {
@@ -79,7 +81,8 @@ enum Fingerprints {
                 prints.append(try archive(observation(frame)))
             }
         } else {
-            guard let image = await PhotoAccess.image(item.id, network: network)?.cgImage else { throw ScanError.unavailable }
+            guard let preview = await PhotoAccess.image(item.id, network: network),
+                  let image = uprightImage(preview) else { throw ScanError.unavailable }
             hash = perceptualHash(image)
             prints = [try archive(observation(image))]
         }
@@ -90,4 +93,21 @@ enum Fingerprints {
         return Fingerprint(version: Fingerprint.version, modified: item.modified, prints: prints, hash: hash, exact: exact)
     }
     enum ScanError: Error { case unavailable }
+    private static func uprightImage(_ image: UIImage) -> CGImage? {
+        guard let raw = image.cgImage else { return nil }
+        let orientation: CGImagePropertyOrientation = switch image.imageOrientation {
+        case .up: .up
+        case .down: .down
+        case .left: .left
+        case .right: .right
+        case .upMirrored: .upMirrored
+        case .downMirrored: .downMirrored
+        case .leftMirrored: .leftMirrored
+        case .rightMirrored: .rightMirrored
+        @unknown default: .up
+        }
+        if orientation == .up { return raw }
+        let oriented = CIImage(cgImage: raw).oriented(orientation)
+        return CIContext().createCGImage(oriented, from: oriented.extent)
+    }
 }

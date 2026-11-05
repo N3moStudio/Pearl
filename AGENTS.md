@@ -25,4 +25,4 @@ Validate changes at the right level. Static analysis and conceptual images do no
 
 Protect real personal media and signing credentials. No personal-photo fixtures in Git, logs, or remote services. Keep any temporary source downloads under ignored `research/evidence/`.
 
-Do not publish a GitHub repository, release, website, or IPA without a request to do so. The current repository is local only.
+The authorized IPA build uses the private remote `N3moStudio/Pearl`. Do not make it public or publish a release without a request. Preserve the canonical local folder and GitHub Desktop registration.

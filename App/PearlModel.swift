@@ -60,6 +60,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         items = newItems; albums = newAlbums; loading = false
         let accessible = Set(items.map(\.id))
         queue.reconcile(accessible: accessible)
+        for item in items where item.favorite && queue.pending.contains(item.id) { queue.unstage(item.id) }
         scan.groups = scan.groups.compactMap { group in
             var updated = group; updated.members = group.members.filter(accessible.contains)
             return updated.members.count > 1 ? updated : nil
@@ -125,7 +126,13 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     private func updateScan(_ progress: ScanProgress, generation: UUID) {
         guard generation == scanGeneration else { return }; scan = progress
     }
-    func stopScan() { scanTask?.cancel() }
+    func stopScan() {
+        guard scanning else { return }
+        scanGeneration = UUID()
+        scanTask?.cancel()
+        scanning = false
+        scanMessage = "Scan paused. Your results are still here."
+    }
     func clearCache() async {
         stopScan()
         if let scanTask { await scanTask.value }

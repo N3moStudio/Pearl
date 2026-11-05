@@ -90,8 +90,10 @@ struct MediaViewer: View {
                 else if loading { ProgressView().tint(.white).accessibilityLabel("Loading preview") }
                 else {
                     VStack(spacing: 20) {
-                        Text("This preview isn't on your iPhone yet.").foregroundStyle(.white)
-                        Button("Download preview from iCloud") { cloud = true }.buttonStyle(.borderedProminent)
+                        Text("This preview isn't available. The item may need iCloud access or may have changed in Photos.").foregroundStyle(.white)
+                        if PhotoAccess.asset(item.id) != nil {
+                            Button("Try downloading from iCloud") { cloud = true }.buttonStyle(.borderedProminent)
+                        }
                     }.padding()
                 }
             }.toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }

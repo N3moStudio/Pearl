@@ -34,7 +34,9 @@ run_build build/simulator.log xcodebuild -project Pearl.xcodeproj -scheme Pearl 
 xcrun simctl install "$udid" build/Simulator/Build/Products/Debug-iphonesimulator/Pearl.app
 xcrun simctl addmedia "$udid" build/fixtures/*.jpg build/fixtures/*.mov
 xcrun simctl privacy "$udid" grant photos com.n3mostudio.pearl
+test_status=0
 run_build build/ui-tests.log xcodebuild -project Pearl.xcodeproj -scheme Pearl -configuration Debug \
   -destination "platform=iOS Simulator,id=$udid" -derivedDataPath build/Simulator \
-  -resultBundlePath build/UI.xcresult test-without-building
+  -resultBundlePath build/UI.xcresult test-without-building || test_status=$?
 xcrun xcresulttool export attachments --path build/UI.xcresult --output-path build/screenshots
+exit "$test_status"

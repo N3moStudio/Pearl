@@ -58,12 +58,14 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         let (newItems, newAlbums) = await (fetched, collections)
         guard generation == loadGeneration else { return }
         if items != newItems, scanning { stopScan() }
+        let previousVersions = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0.modified) })
+        let changed = Set(newItems.filter { previousVersions[$0.id] != nil && previousVersions[$0.id] != $0.modified }.map(\.id))
         items = newItems; albums = newAlbums; loading = false
         let accessible = Set(items.map(\.id))
         queue.reconcile(accessible: accessible)
         for item in items where item.favorite && queue.pending.contains(item.id) { queue.unstage(item.id) }
         scan.groups = scan.groups.compactMap { group in
-            var updated = group; updated.members = group.members.filter(accessible.contains)
+            var updated = group; updated.members = group.members.filter { accessible.contains($0) && !changed.contains($0) }
             return updated.members.count > 1 ? updated : nil
         }
         persist()
@@ -79,7 +81,10 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     }
     @discardableResult func decide(_ item: MediaItem, remove: Bool) -> Bool {
         guard ready, !deleting else { return false }
-        let accepted = queue.decide(item, remove: remove)
+        guard let current = items.first(where: { $0.id == item.id }) else {
+            notice = "This item is no longer accessible. Skip it to continue your review."; return false
+        }
+        let accepted = queue.decide(current, remove: remove)
         if accepted { persist() }
         else { notice = "Favorites and protected items stay safe. Unfavorite in Photos before considering removal." }
         return accepted

@@ -10,6 +10,8 @@ Push the reviewed source to `gitlab`, then manually request workflow `pearl-priv
 
 The workflow runs 14 core tests and seven simulator UI tests before producing a Release arm64 IPA. It verifies identity, version, privacy resources, architecture and the absence of provisioning/signature material. Build 4 is unsigned; the user's sideloader supplies personal signing.
 
+The current app is `6aecf0269562a7261fedc429`. [Build 4](https://codemagic.io/app/6aecf0269562a7261fedc429/build/6aecf040ab17f8deb7533597) passed on November 5, 2026 in approximately 8m 20s. See the [build receipt](VERIFICATION-0.2.1-4.md) for the tested source and evidence boundaries. After the build, the personal account reported about 461.82 free minutes remaining, no paid subscription or payment information, and zero paid M2 seconds; this is an account-wide snapshot, not a promise of future availability.
+
 Download the IPA and engineering evidence through authenticated APIs into ignored local build storage. Review results and package verification, then replace only Pearl's previous IPA in `C:\Users\naith\Desktop\ipa\My Projects (N3mo Studio)`. Deliver only the IPA. Keep logs, test bundles, screenshots and checksum records inside the repository, never as extra delivery files.
 
 Sources checked November 5, 2026: [Codemagic pricing](https://docs.codemagic.io/billing/pricing/), [application API](https://docs.codemagic.io/rest-api/applications/), [API authentication](https://docs.codemagic.io/rest-api/codemagic-rest-api/). Historical GitHub attempts and the previous build 3 receipt remain in `VERIFICATION-0.2.1.md`.

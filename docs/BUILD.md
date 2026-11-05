@@ -4,11 +4,11 @@ Authorized November 4, 2026. Canonical code: `C:\Users\naith\Documents\GitHub\Ph
 
 ## Build
 
-Requires macOS and Xcode 26+ (CI uses Xcode 27.1), Swift 6, XcodeGen. Deployment target iOS 18. Run `swift test`, then `bash scripts/build.sh`. Or dispatch **Build Pearl** in Actions with `tests_only: false`.
+Requires macOS and Xcode 26+ (CI uses Xcode 26.6), Swift 6, XcodeGen. Deployment target iOS 18. Run `swift test`, then `bash scripts/build.sh`. Or dispatch Codemagic workflow `pearl-private-ipa` through the API as described in [FREE-BUILD.md](FREE-BUILD.md).
 
 The build script generates an original Pearl icon and synthetic test media, generates the Xcode project, builds for an iPhone simulator and executes UI tests, then builds an unsigned device app and constructs `Payload/Pearl.app`. Test media is under ignored `build/fixtures`; it is never in the shipping app. Logs, screenshots, test results and the IPA are retained as private Codemagic artifacts.
 
-The IPA is for personal signing with a compatible sideloader such as SideStore or AltStore. The ad-hoc build signature is not an Apple device provisioning signature. Personal Apple signing/provisioning and installation happen through the user's chosen sideloader. No Apple credentials are bundled.
+The IPA is unsigned and requires personal signing with a compatible sideloader such as SideStore or AltStore. Personal Apple signing/provisioning and installation happen through the user's chosen sideloader. No Apple credentials are bundled.
 
 ## Architecture
 

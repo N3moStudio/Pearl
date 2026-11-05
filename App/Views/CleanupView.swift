@@ -89,7 +89,7 @@ struct GroupDetail: View {
     private var items: [MediaItem] { model.items.filter { group.members.contains($0.id) }.sorted { $0.width * $0.height > $1.width * $1.height } }
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            LazyVStack(alignment: .leading, spacing: 20) {
                 Text(group.kind == .video ? "Watch each version. Sound and edits can differ." : "Same moment. You decide which stays.")
                     .foregroundStyle(.secondary)
                 if let first = items.first, group.kind != .video {

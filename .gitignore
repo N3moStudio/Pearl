@@ -21,3 +21,6 @@ private/
 personal-media/
 research/evidence/
 *.log
+# Generated project and local SwiftPM state
+Pearl.xcodeproj/
+.swiftpm/

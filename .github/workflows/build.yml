@@ -33,5 +33,6 @@ jobs:
             build/*.png
             build/*.log
             build/*.xcresult
+            build/screenshots
           if-no-files-found: warn
           retention-days: 7

@@ -1,0 +1,57 @@
+name: Pearl
+options:
+  bundleIdPrefix: com.n3mostudio
+  deploymentTarget:
+    iOS: '18.0'
+settings:
+  base:
+    SWIFT_VERSION: '6.0'
+    SWIFT_STRICT_CONCURRENCY: complete
+    TARGETED_DEVICE_FAMILY: '1,2'
+    MARKETING_VERSION: '0.1.0'
+    CURRENT_PROJECT_VERSION: '1'
+packages:
+  PearlCore:
+    path: .
+  ThinkingOrbs:
+    url: https://github.com/Jakubantalik/Libraries.dev
+    revision: 54722cc9a3dcb167037f7d449d6cca4d174e9eb5
+targets:
+  Pearl:
+    type: application
+    platform: iOS
+    sources: [App]
+    dependencies:
+      - package: PearlCore
+      - package: ThinkingOrbs
+        product: ThinkingOrbsKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.n3mostudio.pearl
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_CFBundleDisplayName: Pearl
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Pearl
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        NSPhotoLibraryUsageDescription: Pearl organizes your library and finds similar photos and videos on your device. Only items you review and confirm are removed.
+        NSPhotoLibraryAddUsageDescription: Pearl creates albums you choose in your photo library.
+        PHPhotoLibraryPreventAutomaticLimitedAccessAlert: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        ITSAppUsesNonExemptEncryption: false
+  PearlUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: Pearl
+schemes:
+  Pearl:
+    build:
+      targets:
+        Pearl: all
+    test:
+      targets: [PearlUITests]

@@ -1,23 +1,29 @@
-# Pearl — actual app screenshots
+# Pearl 0.2.0 native captures
 
-Captured from the passing iPhone simulator run. Synthetic/stock test media only; these are native app captures, not generated concepts.
+From passing simulator run 41967547298, using synthetic/stock media. They match the delivered `85036ecf` build, not the additional unbuilt polish on main. See [verification limits](VERIFICATION.md).
 
-## Library
+## Home
 
-![Pearl library](screenshots/Pearl-Library.png)
+![Home](screenshots/0.2.0/Pearl-Library.png)
 
-## Clean Up
+## Swipe by month
 
-![Local scan results](screenshots/Pearl-Clean-Up.png)
+![Months](screenshots/0.2.0/Pearl-Months.png)
 
-## Review
+## Photo review
 
-![Photo review with undo and queue access](screenshots/Pearl-Review.png)
+Captured during the outgoing decision transition; controls are temporarily disabled until it finishes.
 
-## Compare
+![Full-screen review](screenshots/0.2.0/Pearl-Review.png)
 
-![Manual comparison with nothing preselected](screenshots/Pearl-Compare.png)
+## Local matching and saved recovery
 
-## Large text and dark appearance
+![Local results](screenshots/0.2.0/Pearl-Clean-Up.png)
 
-![Pearl dark appearance at an accessibility text size](screenshots/Pearl-Large-Text-Dark.png)
+![Six previous checks reused after relaunch](screenshots/0.2.0/Pearl-Resumed-Scan.png)
+
+## Comparison
+
+![Manual comparison](screenshots/0.2.0/Pearl-Compare.png)
+
+The complete captures also include a black media-area frame during the month video/photo test, the system Home screen during the saved-background fallback, and the largest-text home layout before its pending correction. These are retained as diagnostic evidence, not proof of successful video rendering, a Live Activity, or complete accessibility acceptance.

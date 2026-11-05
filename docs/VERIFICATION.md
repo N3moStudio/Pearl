@@ -1,35 +1,37 @@
-# Pearl 0.1.0 delivery
+# Pearl 0.2.0 delivery
 
-Built November 4, 2026 (America/Los_Angeles). Source commit `00b07129` in the private [N3moStudio/Pearl repository](https://github.com/N3moStudio/Pearl). Subsequent documentation commits do not change the delivered binary.
+Built November 4, 2026 (America/Los_Angeles). The delivered IPA is from tested source commit `85036ecf` in the private [N3moStudio/Pearl repository](https://github.com/N3moStudio/Pearl). It includes the home/month/full-screen review redesign, true PhotoKit favorites, direct-drag swipes, faster two-phase local matching, durable scan recovery, and iOS 26+ continued-processing integration.
 
-- **IPA:** `C:\Users\naith\Downloads\Pearl-0.1.0.ipa`
-- **Size:** 1,084,793 bytes (about 1.1 MB)
-- **SHA-256:** `fc9ace1284715a43523105674fc4ba452c266f3870be7823955d714deef74c8d`
-- **App:** Pearl 0.1.0, build 1, `com.n3mostudio.pearl`, arm64, iOS 18+
-- **Signing:** ad-hoc integrity signature; import into your personal sideloader to sign/provision for your device.
-- **Successful build:** https://github.com/N3moStudio/Pearl/actions/runs/41957741437
+- **IPA:** `C:\Users\naith\Downloads\Pearl-0.2.0.ipa`
+- **Size:** 1,289,342 bytes (about 1.3 MB)
+- **SHA-256:** `9af88855d8e14a56b2052ccb2ec4831e1c11889a98d2b8b1d9af4161b884799a`
+- **Identity:** Pearl 0.2.0, build 2, `com.n3mostudio.pearl`, arm64, iOS 18+
+- **Signing:** ad-hoc integrity signature; personal signing/provisioning through the user's sideloader is still required.
+- **Passing CI:** https://github.com/N3moStudio/Pearl/actions/runs/41967547298
+- [Previous 0.1.0 verification](VERIFICATION-0.1.0.md)
 
-## Verified
+## Automated and package evidence
 
-Xcode 27.1 compiled the Release iPhone app and Debug simulator app. All **9 Swift core tests** and **3 simulator UI tests** passed. The protection-guard mutation was detected by the test, and the source was restored before packaging. The simulator UI tests covered large text with an explicit dark appearance, photo browsing/staging/undo/final review/unstaging, completed local scans, photo comparison with no preselected removals, and local grouping of re-encoded videos.
+Xcode 27.1 compiled Release for iPhone and Debug for the simulator. **14 Swift core tests and 6 simulator UI tests passed.** Two controlled mutations were caught: broken favorite protection and stale-photo checkpoint reuse. Both original files were restored before packaging. Compiler logs contain no Swift diagnostics; Apple's metadata tool notes that there is no AppIntents dependency.
 
-The seeded simulator library contained 15 items, including synthetic photo variants, an exact file copy and two re-encoded synthetic video clips. It reported 15 checked, 15 originals hashed, and one group in each of Exact duplicates, Similar photos and Possible similar videos. These are fixture results, not a benchmark of real-library accuracy.
+Core tests include a 10,001-item metadata checkpoint round trip, incremental reconciliation after edit/removal, old cross-date duplicate candidates, unavailable-item retry, phase progress, and small/vertical swipe rejection. This is not a 10,000-photo inference benchmark.
 
-The IPA verifier checked bundle ID/version/minimum OS, arm64 Mach-O architecture, app-icon declarations, photo-access usage text, signature resources, privacy manifest, MIT notices and exclusion of test fixtures/credentials/provisioning files. The Mac verified the ad-hoc signature. The downloaded copy's SHA-256 matches the build output.
+The simulator library contained 15 synthetic/stock items. Local scanning found one exact, one similar-photo and one possible similar-video group. The recovery test paused after six completed items, terminated/relaunched the app, and verified that the resumed scan reused six previous checks and finished. UI tests also exercised navigation to other tabs during a scan, actual favorite changes and deletion disabling, filmstrip jumps, swipe/undo, final queue unstaging, and large text/dark appearance.
 
-Actual simulator captures were inspected: Library, Clean Up, Review, Compare and large-text Dark Library. The screenshots use synthetic/stock simulator media. See [screenshots](SCREENSHOTS.md).
+**Background evidence boundary:** the simulator reported `saved fallback`, not a continued-processing grant. It verified saving/pausing when leaving the app without a grant. Real iPhone background execution, the system Live Activity/Lock Screen, expiration/cancellation and sideloader compatibility remain unverified. The iOS 26+ integration is compiled, with CPU-only Vision and software Core Image to avoid restricted background GPU/Neural Engine entitlements.
 
-## REA artifact inspection
+The package verifier checked bundle/version/build/minimum OS, arm64 Mach-O, background mode and permitted identifier, icon declarations, Photos usage text, privacy manifest, license notices, signature resources, and absence of fixtures or credentials. The Mac verified the ad-hoc signature. The downloaded IPA and Downloads copy match the CI SHA-256.
 
-The user's REA skill was used on the **final IPA**, read-only. REA observed the same SHA-256 and a complete container-entry inventory, with 10 file occurrences, 3 directory occurrences and **zero integrity contradictions**. Its scope is archive contents, not runtime behavior, trusted Apple signing, or a complete security review. The native session was closed after export.
+[REA](pearl-0.2.0-rea-evidence.json) independently inventoried the final IPA: 10 files, 3 directories, complete container-entry coverage and zero integrity contradictions. REA observed the same hash. This is read-only archive evidence, not a runtime or Apple provisioning guarantee; the session was closed after export.
 
-- Inventory manifest: `agm_b05a319484516d6cb060804235343e82bbb05e859f8a4a156ebd4fc4d771c5c6`
-- Inspection Evidence: `ev_b0ed8f4af4d75c95df96ba72e33c0da3c51adb7ede2e3bb3f1e29c8823b69bf4`
-- Inventory Evidence: `ev_a7c62561ef819fc1fc3b3c1447c581007c1df5bf2ae4cb66c2894dd91bf16104`
-- [Exported REA Evidence bundle](pearl-0.1.0-rea-evidence.json)
+## Saved source changes not in the IPA
 
-## Still to check on the iPhone
+Commit `84aacd4c` adds an accessibility-size row layout for home shortcuts, a one-column media grid at large text sizes, a softer header gradient, and cheaper per-drag filmstrip/count updates. These changes are saved and pushed, but **are not compiled or included in the delivered IPA**.
 
-Personal signing and installation, real-library precision/recall, iCloud-only resources, limited/shared libraries, actual system deletion cancellation/failure/recovery, upgrades, VoiceOver, Reduce Transparency, thermal behavior and battery/memory performance remain physical-device acceptance work. No personal photos were accessed or uploaded during development. Use the [first iPhone check](DEVICE-CHECK.md) with disposable copies first.
+The final build [41968346754](https://github.com/N3moStudio/Pearl/actions/runs/41968346754) was refused before runner allocation, with GitHub's message: “The job was not started because recent account payments have failed or your spending limit needs to be increased.” No billing settings were changed, no public repository/release was created, and the failed job was not repeatedly retried. Once the account block is cleared, dispatch the existing workflow to validate and package the saved polish revision.
 
-Small follow-up polish: singular/plural group labels and a compact quick-switch comparison layout. Full Live Photo motion playback, compression, OCR and other unchecked research features are outside this initial build.
+## Visual and device limits
+
+Home, month list, comparison and scan captures were inspected. Normal-size photo review is visible in the queue-test capture, taken during its outgoing transition. The separate month-review capture after a small drag shows a black media area; its first item may be a video and this capture does not establish working video rendering. Verify full-screen video rendering/playback on the iPhone. The largest-text home capture exposed cramped shortcut columns; that correction exists only in the unbuilt polish revision described above.
+
+Physical signing/install, real-library precision/recall, locked/background work, actual video playback, iCloud resources, limited/shared libraries, destructive PhotoKit confirmation/cancel/recovery, gestures/VoiceOver, thermal behavior, memory and battery remain [device acceptance checks](DEVICE-CHECK.md). No personal photos were accessed or uploaded. The user's screenshot references were viewed locally and were not copied into the repository or CI.

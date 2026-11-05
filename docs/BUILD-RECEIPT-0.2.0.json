@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "build": 2,
+  "tested_commit": "85036ecf",
+  "passing_run": 41967547298,
+  "core_tests": 14,
+  "simulator_tests": 6,
+  "bytes": 1289342,
+  "sha256": "9af88855d8e14a56b2052ccb2ec4831e1c11889a98d2b8b1d9af4161b884799a",
+  "background_simulator_path": "saved fallback",
+  "unbuilt_polish_commit": "84aacd4c",
+  "blocked_run": 41968346754,
+  "blocker": "GitHub billing/spending-limit refusal before runner allocation"
+}

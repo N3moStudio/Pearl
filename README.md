@@ -2,7 +2,7 @@
 
 A calm, native iPhone app for browsing, organizing, and reviewing a large photo library in manageable pieces.
 
-**Status: Pearl 0.2.0 validation in progress.**
+**Status: Pearl 0.2.0 IPA delivered from tested commit `85036ecf` (14 core + 6 simulator tests).** Additional large-text/filmstrip polish is saved on main but awaits a build because GitHub refused further jobs with a billing/spending-limit error. See the exact [verification boundaries](docs/VERIFICATION.md).
 
 [Verification and IPA details](docs/VERIFICATION.md) · [Actual simulator screenshots](docs/SCREENSHOTS.md) · [First iPhone check](docs/DEVICE-CHECK.md)
 

@@ -1,4 +1,4 @@
-# Pearl 0.2.1 implementation
+# Pearl 0.2.2 implementation
 
 Authorized November 4, 2026. Canonical code: `C:\Users\naith\Documents\GitHub\Photo Cleaner`. Private remote: https://gitlab.com/gajula.naithik/pearl.git. The GitHub remote is retained but unused. The existing GitHub Desktop registration is retained. No desktop input or browser control is required.
 
@@ -41,6 +41,8 @@ The scan first generates visual suggestions, then streams original bytes only fo
 On iOS 26+, an explicit scan button requests `BGContinuedProcessingTask` with a unique job identifier. Apple's system Live Activity reports real phase/progress and supports cancellation. The scan is owned by the app model, independent of the current tab or review screen. System cancellation saves completed work and completes the task once. On older iOS or if immediate background execution is unavailable, scanning works across Pearl tabs; leaving the app cancels and uses a short background lease only to save the checkpoint. No indefinite-background workaround, audio/location mode or automatic deletion is used. Force-quit stops work. Low Power Mode and serious heat pause it. Optional iCloud access remains off each launch.
 
 The home screen uses device storage (not an invented photo-library size), three direct entry points, and media tiles. Swipe opens months with progress and year/order filters. Review is a fixed full-screen presentation, with a title/count/percentage, close/undo, a tappable filmstrip, and Delete / Heart / Keep. The heart changes the real PhotoKit favorite flag. Swipes follow the finger and only commit on release. Pinch/double-tap zoom, video playback and a protection context menu remain available. Delete stages a reversible choice; the final queue and Apple confirmation remain mandatory.
+
+Settings uses a compact inline title and six navigation rows grouped under Your library, Your data and About. It reuses Pearl's sage, canvas and card colors. Photo access, scan options, privacy, cache and notices remain available; longer background/matching explanations are collapsed inside their relevant pages. Dynamic Type wraps titles and moves trailing values beneath them at accessibility sizes; decorative icons stay within their badges. Version and build come from the installed bundle. The iCloud preference still resets off at launch and cannot change during a scan; cache clearing retains its existing scan/clearing guards.
 
 Core tests cover reversible choices, favorites/protected items, stale IDs, deletion completion, persistence round trips, complete-link distances, five-frame/duration gates, cross-date candidates and shortlist bounds. The retained GitHub workflow also has controlled mutation checks; these are not part of the current Codemagic workflow.
 

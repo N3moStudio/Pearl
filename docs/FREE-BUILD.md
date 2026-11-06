@@ -8,9 +8,9 @@ Before dispatch, check the personal account's remaining free M2 time and billing
 
 Push the reviewed source to `gitlab`, then manually request workflow `pearl-private-ipa` on `main`, instance `mac_mini_m2`, with remote access disabled. The workflow is capped at 30 minutes, uses Xcode 26.6 and has no automatic triggers, publication or notification steps.
 
-The workflow runs 14 core tests and seven simulator UI tests before producing a Release arm64 IPA. It verifies identity, version, privacy resources, architecture and the absence of provisioning/signature material. Build 4 is unsigned; the user's sideloader supplies personal signing.
+The workflow runs 14 core tests and eight simulator UI tests before producing a Release arm64 IPA. It verifies identity, version, privacy resources, architecture and the absence of provisioning/signature material. The IPA is unsigned; the user's sideloader supplies personal signing.
 
-The current app is `6aecf0269562a7261fedc429`. [Build 4](https://codemagic.io/app/6aecf0269562a7261fedc429/build/6aecf040ab17f8deb7533597) passed on November 5, 2026 in approximately 8m 20s. See the [build receipt](VERIFICATION-0.2.1-4.md) for the tested source and evidence boundaries. After the build, the personal account reported about 461.82 free minutes remaining, no paid subscription or payment information, and zero paid M2 seconds; this is an account-wide snapshot, not a promise of future availability.
+The current app is `6aecf0269562a7261fedc429`. [Build 5](https://codemagic.io/app/6aecf0269562a7261fedc429/build/6aee5bee24e1ec237556fd68) passed on November 6, 2026 in approximately 11m 17s. See the [build receipt](VERIFICATION-0.2.2.md) for the tested source and evidence boundaries. After the build, the personal account reported about 275.13 free minutes remaining, no paid subscription or payment information, and zero paid M2 seconds; this is an account-wide snapshot, not a promise of future availability.
 
 Download the IPA and engineering evidence through authenticated APIs into ignored local build storage. Review results and package verification, then replace only Pearl's previous IPA in `C:\Users\naith\Desktop\ipa\My Projects (N3mo Studio)`. Deliver only the IPA. Keep logs, test bundles, screenshots and checksum records inside the repository, never as extra delivery files.
 

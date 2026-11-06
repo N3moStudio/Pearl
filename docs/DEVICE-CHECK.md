@@ -1,6 +1,6 @@
 # First iPhone check
 
-Import `Pearl-0.2.1.ipa` into your usual iOS sideloader and let it sign the app for your Apple account/device. Pearl requires iOS 18 or newer. Build 4 is unsigned and needs personal signing/provisioning. Keep the bundle ID consistent across upgrades to retain local review choices.
+Import `Pearl-0.2.2.ipa` into your usual iOS sideloader and let it sign the app for your Apple account/device. Pearl requires iOS 18 or newer. Build 5 is unsigned and needs personal signing/provisioning. Keep the bundle ID consistent across upgrades to retain local review choices.
 
 1. Start with a small selected library containing disposable copies. Open Photos, Videos, Screenshots and an older month. Use the grid's Filter menu to combine date and media type.
 2. Open a photo; try zoom, Delete, Heart, Keep, Undo, partial/reversed drags and the thumbnail filmstrip. Open Swipe, select a month, and confirm its title/count/percentage. Close only with the top-left button. Remove should only add to the review queue. Close and reopen Pearl to confirm saved decisions.
@@ -11,5 +11,6 @@ Import `Pearl-0.2.1.ipa` into your usual iOS sideloader and let it sign the app 
 7. Create an album, select several photos in a grid and use Add to album. They should remain in the main library.
 8. With disposable copies only, stage removal, inspect the final queue, cancel the app confirmation, then cancel Apple's confirmation. The queue should remain. Confirm a separate deletion and verify Photos → Recently Deleted recovery.
 9. Check large text, dark appearance, VoiceOver, Reduce Motion and Reduce Transparency on the physical device. Confirm comfortable reading and controls in portrait and landscape.
+10. Open Settings. Check Photo access, Scanning, Privacy, Analysis cache and About Pearl. With limited access, Choose more photos should open Apple's picker. Enable iCloud downloads, return to Scanning, then relaunch Pearl: the setting should stay on during navigation and reset off on launch. While scanning, downloads and cache clearing should be disabled. Help rows should expand without clipping; large text should wrap without colliding with icons. Clearing analysis cache must preserve original photos and staged review choices.
 
 No personal photos need to be uploaded for debugging. Report the screen, action and error wording; screenshots should use disposable media if shared.

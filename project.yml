@@ -8,8 +8,8 @@ settings:
     SWIFT_VERSION: '6.0'
     SWIFT_STRICT_CONCURRENCY: complete
     TARGETED_DEVICE_FAMILY: '1,2'
-    MARKETING_VERSION: '0.2.1'
-    CURRENT_PROJECT_VERSION: '4'
+    MARKETING_VERSION: '0.2.2'
+    CURRENT_PROJECT_VERSION: '5'
 packages:
   PearlCore:
     path: .

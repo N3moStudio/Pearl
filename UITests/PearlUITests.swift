@@ -38,8 +38,12 @@ final class PearlUITests: XCTestCase {
         XCTAssertTrue(cloud.waitForExistence(timeout: 5))
         XCTAssertEqual(cloud.value as? String, "0")
         capture(app, "Pearl-Scanning-Settings")
-        cloud.tap()
-        XCTAssertEqual(cloud.value as? String, "1")
+        XCTAssertTrue(cloud.isEnabled)
+        // SwiftUI exposes the whole labeled row as a switch. Target the thumb,
+        // rather than the row's center, then wait for its accessible state.
+        cloud.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+        let enabledCloud = NSPredicate(format: "value == '1'")
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: enabledCloud, object: cloud)], timeout: 5), .completed)
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["settingsCache"].tap()
         XCTAssertTrue(app.buttons["clearAnalysisCache"].waitForExistence(timeout: 5))

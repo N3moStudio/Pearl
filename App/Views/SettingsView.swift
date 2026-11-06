@@ -67,13 +67,17 @@ struct SettingsView: View {
         return List {
             Section {
                 Toggle(isOn: $model.allowCloud) {
-                    SettingsRow("iCloud downloads", symbol: "icloud.and.arrow.down")
+                    HStack(spacing: 12) {
+                        SettingsIcon(symbol: "icloud.and.arrow.down")
+                        Text("iCloud downloads").fixedSize(horizontal: false, vertical: true)
+                    }.frame(minHeight: 44)
                 }
                 .disabled(model.scanning)
                 .accessibilityIdentifier("scanCloudDownloads")
             } footer: {
                 Text(model.scanning ? "Available when the scan stops." : "For scans only. Off each launch; matching stays on your iPhone.")
             }.listRowBackground(PearlStyle.card)
+                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
             SettingsGroup("How it works") {
                 SettingsHelp("Background scanning", symbol: "arrow.trianglehead.clockwise", lines: [
                     "On iOS 26 or later, a scan can continue outside Pearl with a system Live Activity when background processing is available.",
@@ -122,6 +126,7 @@ struct SettingsView: View {
             } footer: {
                 Text(model.scanning ? "Stop the scan to clear its cache. Photos and review choices stay." : "Photos and review choices stay. The next scan starts fresh.")
             }.listRowBackground(PearlStyle.card)
+                .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
         }.modifier(SettingsScreen()).navigationTitle("Analysis cache")
     }
 
@@ -184,8 +189,9 @@ private struct SettingsGroup<Content: View>: View {
 
     var body: some View {
         Section { content } header: {
-            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary).textCase(nil)
+            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Color.primary).textCase(nil)
         }.listRowBackground(PearlStyle.card)
+            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
     }
 }
 
@@ -201,10 +207,7 @@ private struct SettingsRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: symbol).font(.body).foregroundStyle(PearlStyle.sage)
-                .frame(width: 32, height: 32)
-                .background(PearlStyle.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
-                .accessibilityHidden(true)
+            SettingsIcon(symbol: symbol)
             let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 8))
             layout {
                 Text(title).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
@@ -212,6 +215,17 @@ private struct SettingsRow: View {
                 if let value { Text(value).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
             }.frame(maxWidth: .infinity, alignment: .leading)
         }.frame(minHeight: 44).accessibilityElement(children: .combine)
+    }
+}
+
+private struct SettingsIcon: View {
+    let symbol: String
+    var body: some View {
+        // Decorative badges stay contained while the adjacent text scales.
+        Image(systemName: symbol).resizable().scaledToFit().frame(width: 18, height: 18)
+            .foregroundStyle(PearlStyle.sage).frame(width: 32, height: 32)
+            .background(PearlStyle.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
+            .accessibilityHidden(true)
     }
 }
 

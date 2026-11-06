@@ -49,7 +49,12 @@ final class PearlUITests: XCTestCase {
         XCTAssertTrue(app.buttons["clearAnalysisCache"].waitForExistence(timeout: 5))
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["settingsAbout"].tap()
-        XCTAssertTrue(app.staticTexts["0.2.2"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["About Pearl"].waitForExistence(timeout: 5))
+        capture(app, "Pearl-About-Settings")
+        // LabeledContent can expose a combined label or an accessibility value.
+        let version = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS '0.2.2' OR value == '0.2.2'")).firstMatch
+        XCTAssertTrue(version.waitForExistence(timeout: 5))
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["settingsScanning"].tap()
         XCTAssertEqual(cloud.value as? String, "1", "Navigating settings must keep the current scan preference")

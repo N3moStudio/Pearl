@@ -4,7 +4,7 @@ Authorized November 4, 2026. Canonical code: `C:\Users\naith\Documents\GitHub\Ph
 
 ## Build
 
-Requires macOS and Xcode 26+ (CI uses Xcode 26.6), Swift 6, XcodeGen. Deployment target iOS 18. Current scope is **validation only**, with no new IPA until requested again. Use Codemagic `pearl-private-validation`, or `swift test`, `python3 scripts/vision_native_check.py`, and `PEARL_VALIDATE_ONLY=1 bash scripts/build.sh`. This validates the regular phone and narrow iPhone SE before exiting without device packaging. The historical IPA workflow remains available only for a future explicitly requested build.
+Requires macOS and Xcode 26+ (CI uses Xcode 26.6), Swift 6, XcodeGen. Deployment target iOS 18. The latest November 7 request explicitly authorizes a private IPA using `pearl-private-ipa`. For validation without packaging, use `pearl-private-validation`, or `swift test`, `python3 scripts/vision_native_check.py`, and `PEARL_VALIDATE_ONLY=1 bash scripts/build.sh`. Validation mode checks the regular phone and narrow iPhone SE before exiting without device packaging. The IPA workflow runs the core/native Vision/regular-phone suites before Release arm64 packaging; unchanged-source narrow-phone evidence is retained separately.
 
 The build script generates an original Pearl icon and synthetic test media, generates the Xcode project, builds for an iPhone simulator and executes tests. Validation mode additionally checks a narrow iPhone SE and exits before device packaging. Only an explicitly requested future IPA workflow builds the unsigned device app and constructs `Payload/Pearl.app`. Test media lives under ignored `build/fixtures`; it is never in the app. Validation logs, screenshots and test results stay private.
 

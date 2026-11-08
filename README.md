@@ -2,11 +2,11 @@
 
 A calm, native iPhone app for browsing, organizing, and reviewing a large photo library in manageable pieces.
 
-**Current work (November 7, 2026): Pearl 0.2.3 source adopts Native Settings Kit and corrects scan candidate coverage/Home Smart cleanup.** Native validation passed: 20 core tests, three Mac Vision cases, seven iOS unit tests, ten regular-phone UI tests and two narrow-phone UI tests. Screenshots were inspected. No new IPA or release was built. The same local checkout and private GitLab repository are retained. Cloud checks use the free personal M2 account and CLI/API access only.
+**Latest delivered: Pearl 0.2.3 (6), November 7, 2026.** Built privately on Codemagic's free personal M2: 20 core tests, three native Mac Vision cases, seven iOS unit tests and ten simulator UI tests passed. The verified unsigned IPA replaced only the older Pearl IPA in the usual delivery folder. Personal signing and physical-device acceptance remain separate.
 
-**Last delivered IPA: Pearl 0.2.2 (5).** Its 14 core tests and eight simulator UI tests passed before delivery. That artifact is unchanged; it does not contain the current source changes. Personal signing and physical-device acceptance remain separate.
+This version includes the Native Settings Kit adoption and scanner/Home shortcut corrections. The same local checkout and private GitLab repository are retained; no paid billing, browser automation, desktop control or public release was used.
 
-[Current settings adoption and checks](docs/SETTINGS-0.2.3.md) · [Settings feature map](docs/SETTINGS-FEATURE-MAP.md) · [Scanner investigation](docs/SCAN-0.2.3.md) · [Last IPA receipt](docs/VERIFICATION-0.2.2.md) · [Private validation/build instructions](docs/FREE-BUILD.md)
+[Latest IPA verification](docs/VERIFICATION-0.2.3.md) · [Settings adoption and screenshots](docs/SETTINGS-0.2.3.md) · [Settings feature map](docs/SETTINGS-FEATURE-MAP.md) · [Scanner investigation](docs/SCAN-0.2.3.md) · [Private build instructions](docs/FREE-BUILD.md)
 
 The user selected the **Pearl visual direction**: warm white, sage accents, rounded shapes, generous spacing, native system glass, textured loading placeholders, and small Thinking Orbs. The first app uses Pearl as its name and `com.n3mostudio.pearl` as its bundle ID, with iOS 18 as the baseline.
 

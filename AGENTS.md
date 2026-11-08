@@ -31,7 +31,7 @@ The active private remote is `https://gitlab.com/gajula.naithik/pearl.git`; the 
 
 ## IPA delivery
 
-Latest scope (November 7, 2026): Native Settings Kit adoption and simulator validation only. Do not dispatch another IPA workflow or deliver a new IPA until explicitly requested again. The older tested IPA remains intact.
+Latest scope (November 7, 2026): the user explicitly requested the latest Pearl IPA after Native Settings Kit validation. Build privately on the free personal Codemagic M2, verify the unsigned package, and replace only Pearl's older IPA in the usual delivery folder. No public release, paid billing, desktop control, or changes to another app are authorized. Keep the older IPA intact until its replacement passes verification.
 
 For appearance/settings work, read `UI/NativeSettingsKit/DESIGN.md` and `ADOPTION.md`. Preserve existing settings, storage, permissions and feature behavior; update `docs/SETTINGS-FEATURE-MAP.md` before moving controls. Use compact rounded presentation, grouped native rows, the larger appearance card and native navigation. Native compilation and screenshot/device checks are separate from portable validation. Pearl's host palette is retained through the kit's optional palette override. Theme changes must not recreate active work or navigation.
 

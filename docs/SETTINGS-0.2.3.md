@@ -40,4 +40,4 @@ Synthetic simulator flows demonstrate navigation and scan plumbing. Native macOS
 
 ## Delivery boundary
 
-This is source plus simulator validation only. No new IPA or release was built/published. The existing `Pearl-0.2.2.ipa` remains the only Pearl IPA in the user's delivery folder. A new device build requires the user's next explicit request.
+The adoption/validation run described above produced no IPA. The user subsequently explicitly requested a device package; [Pearl 0.2.3 build 6](VERIFICATION-0.2.3.md) was privately built, verified and delivered, replacing only Pearl 0.2.2. No public release was published.

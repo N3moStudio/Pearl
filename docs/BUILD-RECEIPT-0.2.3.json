@@ -1,0 +1,52 @@
+{
+  "version": "0.2.3",
+  "build": "6",
+  "source_commit": "a09349693294d731dfbf60afe2778028c07490c1",
+  "codemagic_run": "6af018f424e1ec2375576960",
+  "workflow": "pearl-private-ipa",
+  "machine": "mac_mini_m2",
+  "xcode": "26.6 (17F113)",
+  "started_at": "2026-11-07T22:38:51.846-08:00",
+  "finished_at": "2026-11-07T22:50:34.699-08:00",
+  "tests": {
+    "core": 20,
+    "native_mac_vision_cases": 3,
+    "ios_unit": 7,
+    "simulator_ui": 10,
+    "failures": 0
+  },
+  "unchanged_source_narrow_evidence": {
+    "run": "6aeff49324e1ec23755762f0",
+    "ui_tests": 2,
+    "rerun_for_ipa": false
+  },
+  "package": {
+    "path": "C:\\Users\\naith\\Desktop\\ipa\\My Projects (N3mo Studio)\\Pearl-0.2.3.ipa",
+    "bytes": 1683588,
+    "sha256": "b9ada2059bb980a8c11f368fabe5f27300bf079ef31d89bb3413b763ffc669db",
+    "bundle": "com.n3mostudio.pearl",
+    "version": "0.2.3",
+    "build": "6",
+    "minimum_ios": "18.0",
+    "architecture": "arm64",
+    "signature": "unsigned; personal sideload signing required"
+  },
+  "delivery": {
+    "delivered": "C:\\Users\\naith\\Desktop\\ipa\\My Projects (N3mo Studio)\\Pearl-0.2.3.ipa",
+    "version": "0.2.3",
+    "build": "6",
+    "bytes": 1683588,
+    "old_pearl_removed": true,
+    "delivered_at": "2026-11-07T22:52:24.4528482-08:00"
+  },
+  "quota_after": {
+    "checked_at": "2026-11-07T22:52:49.7641105-08:00",
+    "free_minutes": 72.23,
+    "paid_subscription": false,
+    "payment_info": false,
+    "paid_m2_seconds": 0
+  },
+  "private_repository": "gitlab.com/gajula.naithik/pearl",
+  "public_release": false,
+  "physical_device_tested": false
+}

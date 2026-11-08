@@ -1,0 +1,87 @@
+{
+  "source_commit": "ed7886207ad757c887a9109e36452a58d1199136",
+  "run_id": "6aeff49324e1ec23755762f0",
+  "workflow": "pearl-private-validation",
+  "machine": "mac_mini_m2",
+  "finished_at": "2026-11-07T20:32:06.672-08:00",
+  "status": "passed",
+  "tests": {
+    "core": 20,
+    "native_mac_vision_cases": 3,
+    "ios_unit": 7,
+    "regular_phone_ui": 10,
+    "narrow_phone_ui": 2
+  },
+  "screenshots": [
+    {
+      "file": "screenshots-0.2.3/Pearl-Appearance-Ion-Glass.png",
+      "device": "iPhone 17 Pro",
+      "test": "PearlUITests/testAppearancePersistsAndKeepsNativeNavigation()"
+    },
+    {
+      "file": "screenshots-0.2.3/Pearl-Settings-Ion-Solid.png",
+      "device": "iPhone 17 Pro",
+      "test": "PearlUITests/testAppearancePersistsAndKeepsNativeNavigation()"
+    },
+    {
+      "file": "screenshots-0.2.3/Pearl-Settings-Bloom-Solid.png",
+      "device": "iPhone 17 Pro",
+      "test": "PearlUITests/testAppearancePersistsAndKeepsNativeNavigation()"
+    },
+    {
+      "file": "screenshots-0.2.3/Pearl-Scanning-Large-Text-Dark.png",
+      "device": "iPhone 17 Pro",
+      "test": "PearlUITests/testLargeTextAndDarkAppearance()"
+    },
+    {
+      "file": "screenshots-0.2.3/Pearl-Settings-Large-Text-Dark.png",
+      "device": "iPhone 17 Pro",
+      "test": "PearlUITests/testLargeTextAndDarkAppearance()"
+    },
+    {
+      "file": "screenshots-0.2.3/Pearl-Settings.png",
+      "device": "iPhone 17 Pro",
+      "test": "PearlUITests/testSettingsNavigationAndCloudPreference()"
+    },
+    {
+      "file": "screenshots-0.2.3/SE-Pearl-Appearance-Ion-Glass.png",
+      "device": "Pearl Narrow",
+      "test": "PearlUITests/testAppearancePersistsAndKeepsNativeNavigation()"
+    },
+    {
+      "file": "screenshots-0.2.3/SE-Pearl-Settings-Ion-Solid.png",
+      "device": "Pearl Narrow",
+      "test": "PearlUITests/testAppearancePersistsAndKeepsNativeNavigation()"
+    },
+    {
+      "file": "screenshots-0.2.3/SE-Pearl-Settings-Bloom-Solid.png",
+      "device": "Pearl Narrow",
+      "test": "PearlUITests/testAppearancePersistsAndKeepsNativeNavigation()"
+    },
+    {
+      "file": "screenshots-0.2.3/SE-Pearl-Scanning-Large-Text-Dark.png",
+      "device": "Pearl Narrow",
+      "test": "PearlUITests/testLargeTextAndDarkAppearance()"
+    },
+    {
+      "file": "screenshots-0.2.3/SE-Pearl-Settings-Large-Text-Dark.png",
+      "device": "Pearl Narrow",
+      "test": "PearlUITests/testLargeTextAndDarkAppearance()"
+    }
+  ],
+  "source_checks": "Kit portable validator passed; 144 solid contrast pairs >=5.09:1. Pearl 18 pairs >=5.43:1.",
+  "artifact_contains_ipa": false,
+  "iphone_device_tested": false,
+  "delivered_ipa_unchanged": "Pearl-0.2.2.ipa",
+  "quota_after": {
+    "checked_at": "2026-11-07T20:33:42.6718128-08:00",
+    "free_minutes": 95.18,
+    "paid_subscription": false,
+    "payment_info": false,
+    "paid_m2_seconds": 0
+  },
+  "warnings": [
+    "Xcode skipped AppIntents metadata because no AppIntents dependency exists."
+  ],
+  "inference_limit": "The cloud iOS simulator produced near-constant Vision embeddings in the earlier diagnostic. Accuracy checks run the production helpers on native macOS; real iPhone recall/precision remain unverified."
+}

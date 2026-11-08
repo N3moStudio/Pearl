@@ -57,7 +57,7 @@ final class PearlUITests: XCTestCase {
             .matching(NSPredicate(format: "label CONTAINS '0.2.3' OR value == '0.2.3'")).firstMatch
         XCTAssertTrue(version.waitForExistence(timeout: 5))
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        reveal(app.buttons["settingsScanning"], in: app)
+        reveal(app.buttons["settingsScanning"], in: app, towardEarlierRows: true)
         app.buttons["settingsScanning"].tap()
         XCTAssertEqual(cloud.value as? String, "1", "Navigating settings must keep the current scan preference")
         app.terminate(); launchReady(app)
@@ -317,10 +317,15 @@ final class PearlUITests: XCTestCase {
         let predicate = NSPredicate(format: "enabled == %@", NSNumber(value: enabled))
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: element)], timeout: 15), .completed)
     }
-    @MainActor private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
+    @MainActor private func reveal(_ element: XCUIElement, in app: XCUIApplication, towardEarlierRows: Bool = false) {
         if element.isHittable { return }
-        for _ in 0..<5 where !element.isHittable { app.swipeDown() }
-        for _ in 0..<8 where !element.isHittable { app.swipeUp() }
+        // Scroll the actual List in the known direction. Swiping the whole app
+        // downward at the top can dismiss its sheet on a compact phone.
+        let list = app.collectionViews.firstMatch
+        XCTAssertTrue(list.exists)
+        for _ in 0..<8 where !element.isHittable {
+            if towardEarlierRows { list.swipeDown() } else { list.swipeUp() }
+        }
         XCTAssertTrue(element.isHittable)
     }
 
@@ -342,21 +347,42 @@ final class PearlUITests: XCTestCase {
         reveal(solid, in: app)
         XCTAssertEqual(solid.value as? String, "Selected")
         let ion = app.buttons["theme-ion"]
-        reveal(ion, in: app); ion.tap()
+        reveal(ion, in: app, towardEarlierRows: true); ion.tap()
         reveal(solid, in: app)
         XCTAssertEqual(solid.value as? String, "Selected", "Theme and surface must stay independent")
         app.navigationBars.buttons.element(boundBy: 0).tap()
         capture(app, "Pearl-Settings-Ion-Solid")
+        assertDarkSheet(app)
         app.buttons["settingsAppearance"].tap()
         let glass = app.buttons["surface-glass"]
         reveal(glass, in: app); glass.tap()
         capture(app, "Pearl-Appearance-Ion-Glass")
+        assertDarkSheet(app)
         app.navigationBars.buttons.element(boundBy: 0).tap()
         // Native edge-pop on a real detail page, with no replacement gesture.
         app.buttons["settingsPhotoAccess"].tap()
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5)).press(forDuration: 0.1,
             thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)))
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor private func assertDarkSheet(_ app: XCUIApplication) {
+        // Sample the bare canvas beside rows, not imagery or system controls.
+        guard let image = app.screenshot().image.cgImage,
+              let crop = image.cropping(to: CGRect(x: 2, y: CGFloat(image.height) / 2, width: 4, height: 4)) else {
+            return XCTFail("Missing screenshot canvas")
+        }
+        var pixel = [UInt8](repeating: 0, count: 4)
+        let rendered = pixel.withUnsafeMutableBytes { bytes -> Bool in
+            guard let context = CGContext(data: bytes.baseAddress, width: 1, height: 1, bitsPerComponent: 8,
+                bytesPerRow: 4, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
+            context.draw(crop, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+            return true
+        }
+        XCTAssertTrue(rendered)
+        XCTAssertLessThan(Int(pixel[0]) + Int(pixel[1]) + Int(pixel[2]), 190,
+            "Selecting Ion must update the open sheet to its dark palette")
     }
 
     @MainActor func testThemeChangeKeepsScanAndCloudRestrictions() {

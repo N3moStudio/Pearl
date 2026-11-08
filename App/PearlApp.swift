@@ -27,6 +27,7 @@ struct PearlApp: App {
 
 struct RootView: View {
     @Environment(PearlModel.self) private var model
+    @Environment(PearlAppearance.self) private var appearance
     @State private var settings = false
     var body: some View {
         @Bindable var model = model
@@ -39,8 +40,14 @@ struct RootView: View {
                 }
             } else { WelcomeView() }
         }
-        .sheet(isPresented: $settings) { SettingsView() }
-        .sheet(isPresented: $model.showQueue) { NavigationStack { QueueView() } }
+        .sheet(isPresented: $settings) {
+            SettingsView().modifier(PearlAppearanceRoot())
+                .preferredColorScheme(appearance.theme.kit?.preferredColorScheme)
+        }
+        .sheet(isPresented: $model.showQueue) {
+            NavigationStack { QueueView() }.modifier(PearlAppearanceRoot())
+                .preferredColorScheme(appearance.theme.kit?.preferredColorScheme)
+        }
         .fullScreenCover(item: $model.reviewSession) { session in
             ReviewView(session: session).interactiveDismissDisabled()
         }

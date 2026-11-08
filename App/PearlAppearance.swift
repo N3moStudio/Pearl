@@ -47,7 +47,9 @@ struct PearlAppearanceRoot: ViewModifier {
     func body(content: Content) -> some View {
         let colors = appearance.theme.palette(dark: (appearance.theme.kit?.preferredColorScheme ?? scheme) == .dark)
         content.nativeSettingsAppearance(theme: appearance.theme.kit ?? .glacier, surface: appearance.surface)
-            .environment(\.nskPaletteOverride, appearance.theme == .pearl ? colors : nil)
+            // Resolve once from the selected theme so an already-presented sheet
+            // cannot mix a stale system scheme with newly selected accent colors.
+            .environment(\.nskPaletteOverride, colors)
             .tint(colors.accent).foregroundStyle(colors.text)
     }
 }

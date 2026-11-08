@@ -31,4 +31,8 @@ The active private remote is `https://gitlab.com/gajula.naithik/pearl.git`; the 
 
 ## IPA delivery
 
+Latest scope (November 7, 2026): Native Settings Kit adoption and simulator validation only. Do not dispatch another IPA workflow or deliver a new IPA until explicitly requested again. The older tested IPA remains intact.
+
+For appearance/settings work, read `UI/NativeSettingsKit/DESIGN.md` and `ADOPTION.md`. Preserve existing settings, storage, permissions and feature behavior; update `docs/SETTINGS-FEATURE-MAP.md` before moving controls. Use compact rounded presentation, grouped native rows, the larger appearance card and native navigation. Native compilation and screenshot/device checks are separate from portable validation. Pearl's host palette is retained through the kit's optional palette override. Theme changes must not recreate active work or navigation.
+
 Place the actual latest tested Pearl IPA in `C:\Users\naith\Desktop\ipa\My Projects (N3mo Studio)`. Keep only the current delivered Pearl IPA there, replacing older Pearl versions after the new tested artifact is available. Leave the existing delivered IPA intact until the replacement passes tests and package verification, and leave other projects' IPAs alone. Deliver only the `.ipa`; do not add checksum sidecars, ZIP archives, logs, screenshots, or reports to that folder or Downloads. Keep any needed engineering evidence inside the repository instead. Keep delivery replies brief and omit checksum details unless requested.

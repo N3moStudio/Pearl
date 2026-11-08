@@ -1,4 +1,5 @@
 import SwiftUI
+import NativeSettingsKit
 import PearlCore
 
 struct QueueView: View {
@@ -38,6 +39,6 @@ struct QueueView: View {
             .confirmationDialog("Remove these \(model.pendingItems.count) items from your photo library?", isPresented: $confirm, titleVisibility: .visible) {
                 Button("Continue to Apple confirmation", role: .destructive) { Task { await model.removeConfirmed() } }
             } message: { Text("The items will also be removed from synced iCloud devices. Nothing else in your library is selected.") }
-            .overlay { if model.deleting { ProgressView("Waiting for Photos…").padding().background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20)) } }
+            .overlay { if model.deleting { ProgressView("Waiting for Photos…").padding().nativeSettingsFloatingSurface() } }
     }
 }

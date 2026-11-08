@@ -1,16 +1,7 @@
 import SwiftUI
+import NativeSettingsKit
 import ThinkingOrbsKit
 import PearlCore
-
-enum PearlStyle {
-    static let sage = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark ? UIColor(red: 0.65, green: 0.77, blue: 0.58, alpha: 1) : UIColor(red: 0.30, green: 0.43, blue: 0.25, alpha: 1)
-    })
-    static let canvas = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark ? UIColor(red: 0.07, green: 0.08, blue: 0.07, alpha: 1) : UIColor(red: 0.985, green: 0.978, blue: 0.963, alpha: 1)
-    })
-    static let card = Color(uiColor: .secondarySystemGroupedBackground)
-}
 
 struct ReviewQueueToolbar: ToolbarContent {
     @Environment(PearlModel.self) private var model
@@ -26,9 +17,13 @@ struct ReviewQueueToolbar: ToolbarContent {
 }
 
 extension View {
-    func pearlCard() -> some View {
-        self.padding(18).background(PearlStyle.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(.primary.opacity(0.055)))
+    func pearlCard() -> some View { modifier(PearlCard()) }
+}
+private struct PearlCard: ViewModifier {
+    @Environment(\.nskPalette) private var colors
+    func body(content: Content) -> some View {
+        content.padding(18).background(colors.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(colors.text.opacity(0.055)))
     }
 }
 
@@ -49,14 +44,15 @@ struct OrbStatus: View {
 }
 
 struct PearlPlaceholder: View {
+    @Environment(\.nskPalette) private var colors
     var body: some View {
         Canvas { context, size in
-            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(PearlStyle.sage.opacity(0.06)))
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(colors.accent.opacity(0.06)))
             // Deterministic pearl grain, no artificial wait or perpetual shimmer.
             for i in 0..<450 {
                 let x = CGFloat((i * 73) % 997) / 997 * size.width
                 let y = CGFloat((i * 137) % 991) / 991 * size.height
-                context.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 1, height: 1)), with: .color(PearlStyle.sage.opacity(0.12)))
+                context.fill(Path(ellipseIn: CGRect(x: x, y: y, width: 1, height: 1)), with: .color(colors.accent.opacity(0.12)))
             }
         }.accessibilityHidden(true)
     }
@@ -130,13 +126,14 @@ struct Thumbnail: View {
 }
 
 struct MediaRow: View {
+    @Environment(\.nskPalette) private var colors
     let title: String
     let subtitle: String
     let symbol: String
     var previews: [MediaItem] = []
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: symbol).font(.title3).foregroundStyle(PearlStyle.sage).frame(width: 26)
+            Image(systemName: symbol).font(.title3).foregroundStyle(colors.accent).frame(width: 26)
             VStack(alignment: .leading, spacing: 5) {
                 Text(title).font(.headline).foregroundStyle(.primary)
                 Text(subtitle).font(.subheadline).foregroundStyle(.secondary)

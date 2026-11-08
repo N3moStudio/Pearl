@@ -1,6 +1,30 @@
 # Private GitLab source; manually started personal-account M2 builds only.
 # No automatic triggers, publishing, billing changes or signing secrets.
 workflows:
+  pearl-private-validation:
+    name: Pearl private simulator validation, no IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      xcode: "26.6"
+      vars:
+        PEARL_VALIDATE_ONLY: 1
+    scripts:
+      - name: Prepare XcodeGen
+        script: command -v xcodegen >/dev/null || brew install xcodegen
+      - name: Core and native Vision checks
+        script: |
+          set -euo pipefail
+          mkdir -p build
+          swift test > build/core-tests.log 2>&1 || { tail -100 build/core-tests.log; exit 1; }
+          tail -5 build/core-tests.log
+          python3 scripts/vision_native_check.py
+      - name: Native settings and app checks
+        script: bash scripts/build.sh
+    artifacts:
+      - build/*.log
+      - build/*.xcresult
+      - build/screenshots/**
   pearl-vision-mac-diagnostics:
     name: Pearl private native Mac Vision check
     instance_type: mac_mini_m2
@@ -54,6 +78,7 @@ workflows:
           mkdir -p build
           swift test > build/core-tests.log 2>&1 || { tail -100 build/core-tests.log; exit 1; }
           tail -35 build/core-tests.log
+          python3 scripts/vision_native_check.py
       - name: Run simulator checks and build unsigned IPA
         script: bash scripts/build.sh
     artifacts:

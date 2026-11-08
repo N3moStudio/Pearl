@@ -1,13 +1,23 @@
 import SwiftUI
+import NativeSettingsKit
 import PhotosUI
 
 struct SettingsView: View {
+    @Environment(\.nskPalette) private var colors
     @Environment(PearlModel.self) private var model
+    @Environment(PearlAppearance.self) private var appearance
     @Environment(\.dismiss) private var dismiss
     @State private var limitedPicker = false
     var body: some View {
         NavigationStack {
-            List {
+            NSKList {
+                SettingsGroup {
+                    NavigationLink { AppearanceView() } label: {
+                        NSKIdentityLabel(title: "Make Pearl yours.", subtitle: "\(appearance.theme.title) \u{00B7} \(appearance.surface.title)") {
+                            Image("PearlMark").resizable().scaledToFit().clipShape(RoundedRectangle(cornerRadius: 20))
+                        }
+                    }.accessibilityIdentifier("settingsAppearance")
+                }
                 SettingsGroup("Your library") {
                     NavigationLink { photoAccess } label: {
                         SettingsRow("Photo access", symbol: "photo.on.rectangle", value: accessSummary)
@@ -33,7 +43,7 @@ struct SettingsView: View {
                     }
                 }
             }
-            .modifier(SettingsScreen())
+            .navigationBarTitleDisplayMode(.inline)
             .navigationTitle("Settings")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -45,7 +55,7 @@ struct SettingsView: View {
     }
 
     private var photoAccess: some View {
-        List {
+        NSKList {
             SettingsGroup("Library access") {
                 SettingsRow("Photos", symbol: "photo.on.rectangle", value: accessSummary)
                 if model.authorization == .limited {
@@ -59,12 +69,12 @@ struct SettingsView: View {
                     SettingsRow("Open iOS Settings", symbol: "gearshape")
                 }
             }
-        }.modifier(SettingsScreen()).navigationTitle("Photo access")
+        }.navigationBarTitleDisplayMode(.inline).navigationTitle("Photo access")
     }
 
     private var scanning: some View {
         @Bindable var model = model
-        return List {
+        return NSKList {
             Section {
                 Toggle(isOn: $model.allowCloud) {
                     HStack(spacing: 12) {
@@ -76,29 +86,43 @@ struct SettingsView: View {
                 .accessibilityIdentifier("scanCloudDownloads")
             } footer: {
                 Text(model.scanning ? "Available when the scan stops." : "For scans only. Off each launch; matching stays on your iPhone.")
-            }.listRowBackground(PearlStyle.card)
+            }.listRowBackground(colors.surface)
                 .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-            SettingsGroup("How it works") {
-                SettingsHelp("Background scanning", symbol: "arrow.trianglehead.clockwise", lines: [
+            SettingsGroup {
+                NavigationLink { scanningHelp } label: {
+                    SettingsRow("How scanning works", symbol: "info.circle")
+                }.accessibilityIdentifier("scanningHelp")
+            }
+        }.navigationBarTitleDisplayMode(.inline).navigationTitle("Scanning")
+    }
+
+    private var scanningHelp: some View {
+        NSKList {
+                SettingsGroup("Background scanning") {
+                    ForEach([
                     "On iOS 26 or later, a scan can continue outside Pearl with a system Live Activity when background processing is available.",
                     "iOS may pause work. Force-quitting stops the scan; Low Power Mode or excessive heat pauses it.",
                     "On earlier iOS versions, Pearl saves your place when you leave. Scanning continues while you switch tabs inside Pearl."
-                ])
-                SettingsHelp("Photo & video matching", symbol: "square.on.square", lines: [
+                    ], id: \.self) { Text($0).font(.footnote).foregroundStyle(colors.muted).fixedSize(horizontal: false, vertical: true) }
+                }
+                SettingsGroup("Photo & video matching") {
+                    ForEach([
                     "Exact matches compare single original resources. Live Photos, RAW pairs, and edited sets are excluded.",
                     "Similar photos include Live Photo stills. Results use a conservative shortlist, so some matches may be missed. Recheck all matches from Clean Up to compare again without clearing your cache.",
                     "Video suggestions compare five frames, not sound or every frame. You choose what to keep."
-                ])
-                SettingsHelp("iCloud downloads", symbol: "icloud", lines: [
+                    ], id: \.self) { Text($0).font(.footnote).foregroundStyle(colors.muted).fixedSize(horizontal: false, vertical: true) }
+                }
+                SettingsGroup("iCloud downloads") {
+                    ForEach([
                     "When enabled, Apple may download media for the scan. Analysis stays on your device.",
                     "This setting resets to off each time Pearl launches. Stop the current scan before changing it."
-                ])
-            }
-        }.modifier(SettingsScreen()).navigationTitle("Scanning")
+                    ], id: \.self) { Text($0).font(.footnote).foregroundStyle(colors.muted).fixedSize(horizontal: false, vertical: true) }
+                }
+        }.navigationTitle("How scanning works").navigationBarTitleDisplayMode(.inline)
     }
 
     private var privacy: some View {
-        List {
+        NSKList {
             SettingsGroup("On your iPhone") {
                 SettingsRow("Local photo analysis", symbol: "iphone")
                 SettingsRow("No photo uploads", symbol: "lock.shield")
@@ -110,11 +134,11 @@ struct SettingsView: View {
                     "You review every removal, then confirm it with Photos. Clearing analysis data keeps your review queue and original photos."
                 ])
             }
-        }.modifier(SettingsScreen()).navigationTitle("Privacy")
+        }.navigationBarTitleDisplayMode(.inline).navigationTitle("Privacy")
     }
 
     private var cache: some View {
-        List {
+        NSKList {
             Section {
                 Button {
                     Task { await model.clearCache() }
@@ -125,26 +149,26 @@ struct SettingsView: View {
                 .accessibilityIdentifier("clearAnalysisCache")
             } footer: {
                 Text(model.scanning ? "Stop the scan to clear its cache. Photos and review choices stay." : "Photos and review choices stay. The next scan starts fresh.")
-            }.listRowBackground(PearlStyle.card)
+            }.listRowBackground(colors.surface)
                 .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-        }.modifier(SettingsScreen()).navigationTitle("Analysis cache")
+        }.navigationBarTitleDisplayMode(.inline).navigationTitle("Analysis cache")
     }
 
     private var about: some View {
-        List {
+        NSKList {
             SettingsGroup("Pearl") {
                 LabeledContent("Version", value: version)
                 LabeledContent("Build", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—")
                 LabeledContent("Made by", value: "N3mo Studio")
             }
-        }.modifier(SettingsScreen()).navigationTitle("About Pearl")
+        }.navigationBarTitleDisplayMode(.inline).navigationTitle("About Pearl")
     }
 
     private var noticesPage: some View {
         ScrollView {
             Text(notices).font(.footnote).textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading).padding(20)
-        }.background(PearlStyle.canvas).navigationTitle("Notices").navigationBarTitleDisplayMode(.inline)
+        }.background(colors.canvas).navigationTitle("Notices").navigationBarTitleDisplayMode(.inline)
     }
 
     private var accessSummary: String {
@@ -169,62 +193,17 @@ struct SettingsView: View {
     }
 }
 
-private struct SettingsScreen: ViewModifier {
-    func body(content: Content) -> some View {
-        content.listStyle(.insetGrouped).listSectionSpacing(20)
-            .scrollContentBackground(.hidden).background(PearlStyle.canvas)
-            .contentMargins(.top, 12, for: .scrollContent)
-            .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-private struct SettingsGroup<Content: View>: View {
-    let title: String
-    let content: Content
-
-    init(_ title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
-
-    var body: some View {
-        Section { content } header: {
-            Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Color.primary).textCase(nil)
-        }.listRowBackground(PearlStyle.card)
-            .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-    }
-}
-
-private struct SettingsRow: View {
-    let title: String
-    let symbol: String
-    var value: String?
-    @Environment(\.dynamicTypeSize) private var typeSize
-
-    init(_ title: String, symbol: String, value: String? = nil) {
-        self.title = title; self.symbol = symbol; self.value = value
-    }
-
-    var body: some View {
-        HStack(spacing: 12) {
-            SettingsIcon(symbol: symbol)
-            let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4)) : AnyLayout(HStackLayout(spacing: 8))
-            layout {
-                Text(title).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
-                if !typeSize.isAccessibilitySize { Spacer(minLength: 0) }
-                if let value { Text(value).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
-            }.frame(maxWidth: .infinity, alignment: .leading)
-        }.frame(minHeight: 44).accessibilityElement(children: .combine)
-    }
-}
+private typealias SettingsGroup<Content: View> = NSKSection<Content>
+private typealias SettingsRow = NSKRow
 
 private struct SettingsIcon: View {
+    @Environment(\.nskPalette) private var colors
     let symbol: String
     var body: some View {
         // Decorative badges stay contained while the adjacent text scales.
         Image(systemName: symbol).resizable().scaledToFit().frame(width: 18, height: 18)
-            .foregroundStyle(PearlStyle.sage).frame(width: 32, height: 32)
-            .background(PearlStyle.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 10))
+            .foregroundStyle(colors.accent).frame(width: 32, height: 32)
+
             .accessibilityHidden(true)
     }
 }

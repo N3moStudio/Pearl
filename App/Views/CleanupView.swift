@@ -1,7 +1,9 @@
 import SwiftUI
+import NativeSettingsKit
 import PearlCore
 
 struct CleanupView: View {
+    @Environment(\.nskPalette) private var colors
     @Environment(PearlModel.self) private var model
     private func groups(_ kind: MatchGroup.Kind) -> [MatchGroup] {
         model.scan.groups.filter { $0.kind == kind && !$0.members.allSatisfy(model.queue.reviewed.contains) }
@@ -35,7 +37,7 @@ struct CleanupView: View {
                     Button(model.scanning ? "Pause scan" : (model.scan.checked > 0 && model.scan.phase != .complete ? "Resume scan" : "Find similar moments"),
                            systemImage: model.scanning ? "pause" : "sparkles") {
                         if model.scanning { model.stopScan() } else { model.beginScan() }
-                    }.buttonStyle(.borderedProminent).controlSize(.large).disabled(model.items.isEmpty || model.clearingCache || model.stoppingScan)
+                    }.buttonStyle(.borderedProminent).foregroundStyle(colors.onAccent).controlSize(.large).disabled(model.items.isEmpty || model.clearingCache || model.stoppingScan)
                         .accessibilityIdentifier("scanButton")
                     if model.scanning { Text(model.backgroundStatus).font(.footnote).foregroundStyle(.secondary) }
                 }.pearlCard()
@@ -52,7 +54,7 @@ struct CleanupView: View {
                     .font(.footnote).foregroundStyle(.secondary)
                 Text("You choose what stays.").font(.subheadline).foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(.vertical)
             }.padding(20).frame(maxWidth: 750).frame(maxWidth: .infinity)
-        }.background(PearlStyle.canvas).navigationTitle("Clean Up")
+        }.background(colors.canvas).navigationTitle("Clean Up")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu("Scan options", systemImage: "ellipsis.circle") {
@@ -72,6 +74,7 @@ struct CleanupView: View {
 }
 
 struct GroupList: View {
+    @Environment(\.nskPalette) private var colors
     let title: String
     let kind: MatchGroup.Kind
     @Environment(PearlModel.self) private var model
@@ -97,11 +100,12 @@ struct GroupList: View {
                     }.buttonStyle(.plain).accessibilityIdentifier("matchGroup")
                 }
             }.padding(20).frame(maxWidth: 750).frame(maxWidth: .infinity)
-        }.background(PearlStyle.canvas).navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+        }.background(colors.canvas).navigationTitle(title).navigationBarTitleDisplayMode(.inline)
     }
 }
 
 struct GroupDetail: View {
+    @Environment(\.nskPalette) private var colors
     let group: MatchGroup
     @Environment(PearlModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -114,7 +118,7 @@ struct GroupDetail: View {
                 Text(group.kind == .video ? "Watch each version. Sound and edits can differ." : "Same moment. You decide which stays.")
                     .foregroundStyle(.secondary)
                 if let first = items.first, group.kind != .video {
-                    Label("Largest resolution: \(first.width) × \(first.height)", systemImage: "sparkles").font(.subheadline).foregroundStyle(PearlStyle.sage)
+                    Label("Largest resolution: \(first.width) × \(first.height)", systemImage: "sparkles").font(.subheadline).foregroundStyle(colors.accent)
                 }
                 ForEach(items) { item in
                     VStack(alignment: .leading, spacing: 10) {
@@ -139,7 +143,7 @@ struct GroupDetail: View {
                 Text(selected.isEmpty ? "Nothing is selected for removal." : "\(selected.count) selected. \(selected.count == items.count ? "Consider keeping at least one version." : "Nothing is deleted yet.")")
                     .font(.footnote).foregroundStyle(.secondary)
             }.padding(20).frame(maxWidth: 650).frame(maxWidth: .infinity)
-        }.background(PearlStyle.canvas).navigationTitle("Compare").navigationBarTitleDisplayMode(.inline)
+        }.background(colors.canvas).navigationTitle("Compare").navigationBarTitleDisplayMode(.inline)
         .safeAreaInset(edge: .bottom) {
             HStack {
                 Button("Keep all") { for item in items { model.decide(item, remove: false) }; dismiss() }.buttonStyle(.bordered)
@@ -147,8 +151,8 @@ struct GroupDetail: View {
                 Button("Review selection") {
                     for item in items where selected.contains(item.id) { model.decide(item, remove: true) }
                     selected = []; model.showQueue = true
-                }.buttonStyle(.borderedProminent).disabled(selected.isEmpty)
-            }.padding().background(.regularMaterial)
+                }.buttonStyle(.borderedProminent).foregroundStyle(colors.onAccent).disabled(selected.isEmpty)
+            }.padding().nativeSettingsFloatingSurface()
         }.sheet(item: $viewing) { MediaViewer(item: $0) }
     }
 }

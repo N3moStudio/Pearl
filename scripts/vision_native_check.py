@@ -4,10 +4,16 @@ import subprocess
 
 source = Path('App/Services/Fingerprints.swift').read_text()
 helpers = source.split('enum Fingerprints {', 1)[1].split('    static func perceptualHash', 1)[0]
+rules = Path('Sources/PearlCore/MatchRules.swift').read_text().split('public enum MatchRules {', 1)[1].split('    public static func similarVideo', 1)[0]
 swift = '''import Foundation
 import Vision
 import CoreGraphics
 import CoreML
+import AppKit
+import ImageIO
+enum MatchRules {
+''' + rules + '''
+}
 enum Fingerprints {
 ''' + helpers + '''
 enum ScanError: Error { case unavailable }
@@ -26,14 +32,23 @@ func image(_ checker: Bool) -> CGImage {
     }
     return c.makeImage()!
 }
-let a = try Fingerprints.decode(Fingerprints.archive(Fingerprints.observation(image(false))))
+let original = image(false)
+let jpeg = NSBitmapImageRep(cgImage: original).representation(using: .jpeg, properties: [.compressionFactor:0.55])!
+let recompressed = CGImageSourceCreateImageAtIndex(CGImageSourceCreateWithData(jpeg as CFData,nil)!,0,nil)!
+let a = try Fingerprints.decode(Fingerprints.archive(Fingerprints.observation(original)))
+let same = try Fingerprints.decode(Fingerprints.archive(Fingerprints.observation(original)))
+let compressed = try Fingerprints.decode(Fingerprints.archive(Fingerprints.observation(recompressed)))
 let b = try Fingerprints.decode(Fingerprints.archive(Fingerprints.observation(image(true))))
 let av = a.data.withUnsafeBytes { Array($0.bindMemory(to:Float.self)) }
 let bv = b.data.withUnsafeBytes { Array($0.bindMemory(to:Float.self)) }
 let l2 = sqrt(zip(av,bv).map { Double($0-$1)*Double($0-$1) }.reduce(0,+))
 let distance = try Fingerprints.distance(a,b)
-print("Native Mac Vision: sameData=\\(a.data==b.data), distance=\\(distance), manualL2=\\(l2), firstValues=\\(av.prefix(5))")
-guard distance > 0.24 else { fatalError("Unrelated images failed the actual app matching threshold on native Mac") }
+let identicalDistance = try Fingerprints.distance(a,same)
+let compressedDistance = try Fingerprints.distance(a,compressed)
+print("Native Mac Vision: identical=\\(identicalDistance), reencoded=\\(compressedDistance), unrelated=\\(distance), manualL2=\\(l2)")
+guard MatchRules.similarPhoto([identicalDistance]), MatchRules.similarPhoto([compressedDistance]),
+      !MatchRules.similarPhoto([distance]) else { fatalError("Native Vision failed the actual app matching rules") }
+print("PASS: 3 native Vision accuracy cases using production helpers and matching rules")
 '''
 Path('build').mkdir(exist_ok=True)
 path = Path('build/vision-native.swift')

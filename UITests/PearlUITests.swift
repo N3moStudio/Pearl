@@ -15,9 +15,9 @@ final class PearlUITests: XCTestCase {
         app.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         let scanning = app.buttons["settingsScanning"]
-        XCTAssertTrue(scanning.isHittable)
-        XCTAssertGreaterThanOrEqual(scanning.frame.height, 44)
         capture(app, "Pearl-Settings-Large-Text-Dark")
+        reveal(scanning, in: app)
+        XCTAssertGreaterThanOrEqual(scanning.frame.height, 44)
         scanning.tap()
         XCTAssertTrue(app.switches["scanCloudDownloads"].waitForExistence(timeout: 5))
         capture(app, "Pearl-Scanning-Large-Text-Dark")
@@ -28,7 +28,7 @@ final class PearlUITests: XCTestCase {
         app.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["settingsPhotoAccess"].isHittable)
-        XCTAssertTrue(app.buttons["settingsAbout"].isHittable)
+        XCTAssertTrue(app.buttons["settingsAppearance"].isHittable)
         capture(app, "Pearl-Settings")
         app.buttons["settingsPhotoAccess"].tap()
         XCTAssertTrue(app.buttons["Open iOS Settings"].waitForExistence(timeout: 5))
@@ -48,6 +48,7 @@ final class PearlUITests: XCTestCase {
         app.buttons["settingsCache"].tap()
         XCTAssertTrue(app.buttons["clearAnalysisCache"].waitForExistence(timeout: 5))
         app.navigationBars.buttons.element(boundBy: 0).tap()
+        reveal(app.buttons["settingsAbout"], in: app)
         app.buttons["settingsAbout"].tap()
         XCTAssertTrue(app.navigationBars["About Pearl"].waitForExistence(timeout: 5))
         capture(app, "Pearl-About-Settings")
@@ -56,6 +57,7 @@ final class PearlUITests: XCTestCase {
             .matching(NSPredicate(format: "label CONTAINS '0.2.3' OR value == '0.2.3'")).firstMatch
         XCTAssertTrue(version.waitForExistence(timeout: 5))
         app.navigationBars.buttons.element(boundBy: 0).tap()
+        reveal(app.buttons["settingsScanning"], in: app)
         app.buttons["settingsScanning"].tap()
         XCTAssertEqual(cloud.value as? String, "1", "Navigating settings must keep the current scan preference")
         app.terminate(); launchReady(app)
@@ -270,6 +272,9 @@ final class PearlUITests: XCTestCase {
     }
 
     @MainActor private func launchReady(_ app: XCUIApplication) {
+        if !app.launchArguments.contains("--ui-test-preserve-appearance") && !app.launchArguments.contains("--ui-test-reset-appearance") {
+            app.launchArguments.append("--ui-test-reset-appearance")
+        }
         let permissionMonitor = addUIInterruptionMonitor(withDescription: "Synthetic Photos access") { alert in
             let allow = alert.buttons["Allow Full Access"]
             guard allow.exists else { return false }
@@ -311,6 +316,64 @@ final class PearlUITests: XCTestCase {
     @MainActor private func waitEnabled(_ element: XCUIElement, _ enabled: Bool) {
         let predicate = NSPredicate(format: "enabled == %@", NSNumber(value: enabled))
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: element)], timeout: 15), .completed)
+    }
+    @MainActor private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
+        if element.isHittable { return }
+        for _ in 0..<5 where !element.isHittable { app.swipeDown() }
+        for _ in 0..<8 where !element.isHittable { app.swipeUp() }
+        XCTAssertTrue(element.isHittable)
+    }
+
+    @MainActor func testAppearancePersistsAndKeepsNativeNavigation() {
+        let app = XCUIApplication(); launchReady(app)
+        app.buttons["Settings"].tap(); app.buttons["settingsAppearance"].tap()
+        XCTAssertTrue(app.navigationBars["Appearance"].waitForExistence(timeout: 5))
+        let bloom = app.buttons["theme-bloom"], solid = app.buttons["surface-solid"]
+        reveal(bloom, in: app); bloom.tap()
+        XCTAssertTrue(app.navigationBars["Appearance"].exists, "Changing theme must not reset navigation")
+        reveal(solid, in: app); solid.tap()
+        XCTAssertEqual(solid.value as? String, "Selected")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        capture(app, "Pearl-Settings-Bloom-Solid")
+        app.terminate(); app.launchArguments = ["--ui-test-preserve-appearance"]; launchReady(app)
+        app.buttons["Settings"].tap(); app.buttons["settingsAppearance"].tap()
+        reveal(bloom, in: app)
+        XCTAssertEqual(bloom.value as? String, "Selected")
+        reveal(solid, in: app)
+        XCTAssertEqual(solid.value as? String, "Selected")
+        let ion = app.buttons["theme-ion"]
+        reveal(ion, in: app); ion.tap()
+        reveal(solid, in: app)
+        XCTAssertEqual(solid.value as? String, "Selected", "Theme and surface must stay independent")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        capture(app, "Pearl-Settings-Ion-Solid")
+        app.buttons["settingsAppearance"].tap()
+        let glass = app.buttons["surface-glass"]
+        reveal(glass, in: app); glass.tap()
+        capture(app, "Pearl-Appearance-Ion-Glass")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        // Native edge-pop on a real detail page, with no replacement gesture.
+        app.buttons["settingsPhotoAccess"].tap()
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5)).press(forDuration: 0.1,
+            thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)))
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor func testThemeChangeKeepsScanAndCloudRestrictions() {
+        let app = XCUIApplication(); app.launchArguments = ["--ui-test-clear-scan", "--ui-test-slow-scan"]; launchReady(app)
+        app.buttons["homeSmartCleanup"].tap()
+        XCTAssertTrue(app.buttons["scanButton"].waitForExistence(timeout: 10))
+        app.buttons["Settings"].tap(); app.buttons["settingsScanning"].tap()
+        XCTAssertFalse(app.switches["scanCloudDownloads"].isEnabled)
+        app.navigationBars.buttons.element(boundBy: 0).tap(); app.buttons["settingsAppearance"].tap()
+        app.buttons["theme-glacier"].tap()
+        XCTAssertTrue(app.navigationBars["Appearance"].exists)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.buttons["closeSettings"].tap()
+        XCTAssertTrue(app.navigationBars["Clean Up"].waitForExistence(timeout: 5))
+        let scan = app.buttons["scanButton"]
+        XCTAssertTrue(scan.label == "Pause scan" || app.staticTexts["Scan complete. You choose what stays."].exists)
+        if scan.label == "Pause scan" { scan.tap(); XCTAssertTrue(app.staticTexts["Scan paused. Your place is saved."].waitForExistence(timeout: 15)) }
     }
     @MainActor private func capture(_ app: XCUIApplication, _ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = name

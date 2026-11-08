@@ -1,8 +1,10 @@
 import SwiftUI
+import NativeSettingsKit
 import AVKit
 import PearlCore
 
 struct MediaViewer: View {
+    @Environment(\.nskPalette) private var colors
     let item: MediaItem
     @Environment(\.dismiss) private var dismiss
     @Environment(PearlModel.self) private var model
@@ -20,7 +22,7 @@ struct MediaViewer: View {
                     VStack(spacing: 20) {
                         Text("This preview isn't available. The item may need iCloud access or may have changed in Photos.").foregroundStyle(.white)
                         if PhotoAccess.asset(item.id) != nil {
-                            Button("Try downloading from iCloud") { cloud = true }.buttonStyle(.borderedProminent)
+                            Button("Try downloading from iCloud") { cloud = true }.buttonStyle(.borderedProminent).foregroundStyle(colors.onAccent)
                         }
                     }.padding()
                 }

@@ -1,7 +1,9 @@
 import SwiftUI
+import NativeSettingsKit
 import PearlCore
 
 struct AlbumsView: View {
+    @Environment(\.nskPalette) private var colors
     @Environment(PearlModel.self) private var model
     @State private var creating = false
     @State private var title = ""
@@ -9,7 +11,7 @@ struct AlbumsView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 Text("A place for the things you keep.").foregroundStyle(.secondary)
-                Button("New album", systemImage: "plus") { creating = true }.buttonStyle(.borderedProminent)
+                Button("New album", systemImage: "plus") { creating = true }.buttonStyle(.borderedProminent).foregroundStyle(colors.onAccent)
                 ForEach(model.albums) { album in
                     NavigationLink { AlbumDetail(album: album) } label: {
                         MediaRow(title: album.title, subtitle: "\(album.count) items", symbol: "rectangle.stack",
@@ -18,7 +20,7 @@ struct AlbumsView: View {
                 }
                 if model.albums.isEmpty { ContentUnavailableView("Make room for a collection", systemImage: "rectangle.stack", description: Text("Create an album, then select items from any grid to add them.")) }
             }.padding(20).frame(maxWidth: 750).frame(maxWidth: .infinity)
-        }.background(PearlStyle.canvas).navigationTitle("Albums")
+        }.background(colors.canvas).navigationTitle("Albums")
             .alert("New album", isPresented: $creating) {
                 TextField("Album name", text: $title)
                 Button("Create") { let name = title; title = ""; Task { await model.createAlbum(name) } }

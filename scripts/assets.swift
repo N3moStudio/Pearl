@@ -25,6 +25,12 @@ let icon = drawImage(size: 1024) { c in
     c.drawRadialGradient(gradient, startCenter: CGPoint(x: 400, y: 650), startRadius: 10, endCenter: CGPoint(x: 500, y: 500), endRadius: 480, options: .drawsAfterEndLocation)
 }
 try save(icon, to: icons.appending(path: "Pearl.png"))
+let mark = root.appending(path: "App/Assets.xcassets/PearlMark.imageset")
+try FileManager.default.createDirectory(at: mark, withIntermediateDirectories: true)
+try save(icon, to: mark.appending(path: "Pearl.png"))
+try """
+{"images":[{"filename":"Pearl.png","idiom":"universal"}],"info":{"author":"xcode","version":1}}
+""".write(to: mark.appending(path: "Contents.json"), atomically: true, encoding: .utf8)
 try """
 {"images":[{"filename":"Pearl.png","idiom":"universal","platform":"ios","size":"1024x1024"}],"info":{"author":"xcode","version":1}}
 """.write(to: icons.appending(path: "Contents.json"), atomically: true, encoding: .utf8)

@@ -11,6 +11,8 @@ settings:
     MARKETING_VERSION: '0.2.3'
     CURRENT_PROJECT_VERSION: '6'
 packages:
+  NativeSettingsKit:
+    path: UI/NativeSettingsKit
   PearlCore:
     path: .
   ThinkingOrbs:
@@ -22,6 +24,7 @@ targets:
     platform: iOS
     sources: [App]
     dependencies:
+      - package: NativeSettingsKit
       - package: PearlCore
       - package: ThinkingOrbs
         product: ThinkingOrbsKit
@@ -50,13 +53,14 @@ targets:
   PearlScanTests:
     type: bundle.unit-test
     platform: iOS
-    sources: [Tests/PearlScanTests]
+    sources: [Tests/PearlScanTests, UI/NativeSettingsKit/Tests/NativeSettingsKitTests]
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: Pearl
       - package: PearlCore
+      - package: NativeSettingsKit
   PearlUITests:
     type: bundle.ui-testing
     platform: iOS

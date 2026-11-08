@@ -1,7 +1,9 @@
 import SwiftUI
+import NativeSettingsKit
 import PearlCore
 
 struct LibraryView: View {
+    @Environment(\.nskPalette) private var colors
     @Environment(PearlModel.self) private var model
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var capacity: Int64 = 0
@@ -14,7 +16,7 @@ struct LibraryView: View {
                     if capacity > 0 {
                         Text("\(ByteCountFormatter.string(fromByteCount: capacity - available, countStyle: .file)) of \(ByteCountFormatter.string(fromByteCount: capacity, countStyle: .file)) used")
                             .font(.subheadline).foregroundStyle(.secondary)
-                        ProgressView(value: Double(capacity - available), total: Double(capacity)).tint(PearlStyle.sage)
+                        ProgressView(value: Double(capacity - available), total: Double(capacity)).tint(colors.accent)
                             .accessibilityLabel("Device storage used")
                     }
                     Text("\(model.items.count.formatted()) photos & videos").font(.subheadline).foregroundStyle(.secondary)
@@ -50,9 +52,9 @@ struct LibraryView: View {
                 }
             }.padding(20).frame(maxWidth: 750).frame(maxWidth: .infinity)
         }.background {
-            PearlStyle.canvas.ignoresSafeArea()
+            colors.canvas.ignoresSafeArea()
             VStack {
-                LinearGradient(colors: [PearlStyle.sage.opacity(0.16), .clear], startPoint: .top, endPoint: .bottom).frame(height: 320)
+                LinearGradient(colors: [colors.accent.opacity(0.16), .clear], startPoint: .top, endPoint: .bottom).frame(height: 320)
                 Spacer()
             }.ignoresSafeArea()
         }
@@ -77,6 +79,7 @@ struct LibraryView: View {
 }
 
 private struct HomeAction: View {
+    @Environment(\.nskPalette) private var colors
     let title: String
     let symbol: String
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -94,13 +97,14 @@ private struct HomeAction: View {
         }
     }
     private var icon: some View {
-        Image(systemName: symbol).font(.system(size: 28, weight: .regular)).foregroundStyle(PearlStyle.sage)
-            .frame(width: 68, height: 68).background(.regularMaterial, in: Circle())
-            .overlay(Circle().strokeBorder(PearlStyle.sage.opacity(0.14)))
+        Image(systemName: symbol).font(.system(size: 28, weight: .regular)).foregroundStyle(colors.accent)
+            .frame(width: 68, height: 68).background { PearlFloatingBackground(shape: Circle()) }
+            .overlay(Circle().strokeBorder(colors.accent.opacity(0.14)))
     }
 }
 
 struct PhotoTile: View {
+    @Environment(\.nskPalette) private var colors
     let title: String
     let subtitle: String
     let symbol: String
@@ -111,7 +115,7 @@ struct PhotoTile: View {
             if let cover { Thumbnail(id: cover.id, size: 550, modified: cover.modified) }
             else {
                 PearlPlaceholder()
-                Image(systemName: symbol).font(.system(size: 35)).foregroundStyle(PearlStyle.sage.opacity(0.5))
+                Image(systemName: symbol).font(.system(size: 35)).foregroundStyle(colors.accent.opacity(0.5))
                     .frame(maxWidth: .infinity, maxHeight: .infinity).padding(.bottom, 30)
             }
             LinearGradient(colors: [.clear, .black.opacity(0.12), .black.opacity(0.8)], startPoint: .top, endPoint: .bottom)
@@ -125,6 +129,7 @@ struct PhotoTile: View {
 }
 
 struct SwipeLibraryView: View {
+    @Environment(\.nskPalette) private var colors
     @Environment(PearlModel.self) private var model
     @State private var oldest = false
     @State private var year: Int?
@@ -170,7 +175,7 @@ struct SwipeLibraryView: View {
                 }.padding(.horizontal, 20)
                 if months.isEmpty { ContentUnavailableView("No moments here yet", systemImage: "calendar") }
             }.padding(.vertical, 12).frame(maxWidth: 750).frame(maxWidth: .infinity)
-        }.background(PearlStyle.canvas).navigationTitle("Swipe")
+        }.background(colors.canvas).navigationTitle("Swipe")
             .toolbar {
                 ReviewQueueToolbar()
                 ToolbarItem(placement: .topBarTrailing) {
@@ -192,14 +197,15 @@ struct SwipeLibraryView: View {
 }
 
 private struct MonthRing: View {
+    @Environment(\.nskPalette) private var colors
     let done: Int
     let total: Int
     var body: some View {
         ZStack {
-            Circle().stroke(PearlStyle.sage.opacity(0.12), lineWidth: 5)
+            Circle().stroke(colors.accent.opacity(0.12), lineWidth: 5)
             Circle().trim(from: 0, to: Double(done) / Double(max(total, 1)))
-                .stroke(PearlStyle.sage, style: StrokeStyle(lineWidth: 5, lineCap: .round)).rotationEffect(.degrees(-90))
-            if done == total { Image(systemName: "checkmark").font(.caption.bold()).foregroundStyle(PearlStyle.sage) }
+                .stroke(colors.accent, style: StrokeStyle(lineWidth: 5, lineCap: .round)).rotationEffect(.degrees(-90))
+            if done == total { Image(systemName: "checkmark").font(.caption.bold()).foregroundStyle(colors.accent) }
         }.frame(width: 38, height: 38).accessibilityLabel("\(done) of \(total) sorted")
     }
 }

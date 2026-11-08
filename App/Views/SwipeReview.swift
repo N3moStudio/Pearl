@@ -1,8 +1,10 @@
 import SwiftUI
+import NativeSettingsKit
 import AVKit
 import PearlCore
 
 struct ReviewView: View {
+    @Environment(\.nskPalette) private var colors
     let session: ReviewSession
     @Environment(PearlModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -47,7 +49,7 @@ struct ReviewView: View {
                     Image(systemName: "checkmark.circle").font(.system(size: 50)).foregroundStyle(keepColor)
                     Text("A little lighter").font(.title.bold())
                     Text("Your choices are saved.").foregroundStyle(.secondary)
-                    Button("Review selected items") { queue = true }.buttonStyle(.borderedProminent).tint(PearlStyle.sage)
+                    Button("Review selected items") { queue = true }.buttonStyle(.borderedProminent).foregroundStyle(colors.onAccent).tint(colors.accent)
                         .disabled(model.pendingItems.isEmpty)
                     Button("Back to months") { dismiss() }.buttonStyle(.bordered)
                     Spacer()

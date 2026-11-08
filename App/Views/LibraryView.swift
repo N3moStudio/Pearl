@@ -1,7 +1,9 @@
 import SwiftUI
+import NativeSettingsKit
 import PearlCore
 
 struct MediaGrid: View {
+    @Environment(\.nskPalette) private var colors
     let title: String
     let items: [MediaItem]
     @Environment(PearlModel.self) private var model
@@ -51,7 +53,7 @@ struct MediaGrid: View {
                         .accessibilityLabel("\(item.isVideo ? "Video" : "Photo"), \(item.date.formatted(date: .abbreviated, time: .omitted))\(selected.contains(item.id) ? ", selected" : "")")
                 }
             }.padding(12)
-        }.background(PearlStyle.canvas).navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+        }.background(colors.canvas).navigationTitle(title).navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ReviewQueueToolbar()
             ToolbarItem(placement: .topBarTrailing) {
@@ -77,7 +79,7 @@ struct MediaGrid: View {
                         for item in items where selected.contains(item.id) { model.decide(item, remove: true) }
                         selected = []; selecting = false
                     }
-                }.font(.subheadline).padding().background(.regularMaterial)
+                }.font(.subheadline).padding().nativeSettingsFloatingSurface()
             }
         }
         .sheet(isPresented: $albumPicker) { AlbumPicker(ids: selected) }

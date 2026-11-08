@@ -6,8 +6,14 @@ public struct ScanRecord: Codable, Sendable {
     public var hash: UInt64?
     public var digest: String?
     public var exactAttempted: Bool
-    public init(item: MediaItem, hash: UInt64?, digest: String? = nil, exactAttempted: Bool = false) {
+    public var verificationFailed: Bool?
+    // Missing in older checkpoints: keep reusable fingerprints/digests but redo matching.
+    public var comparisonRevision: Int?
+    public var isCompared: Bool { comparisonRevision == ScanCheckpoint.matchingRevision }
+    public init(item: MediaItem, hash: UInt64?, digest: String? = nil, exactAttempted: Bool = false, verificationFailed: Bool? = nil) {
         self.item = item; self.hash = hash; self.digest = digest; self.exactAttempted = exactAttempted
+        self.verificationFailed = verificationFailed
+        comparisonRevision = ScanCheckpoint.matchingRevision
     }
     public func matches(_ current: MediaItem) -> Bool {
         item.id == current.id && item.modified == current.modified && item.isVideo == current.isVideo &&
@@ -15,18 +21,32 @@ public struct ScanRecord: Codable, Sendable {
     }
     /// A shortlist for expensive original-byte verification, never proof of equality.
     public var exactKey: String? {
-        guard let hash, !item.isLive else { return nil }
-        return "\(item.isVideo):\(item.width)x\(item.height):\(item.duration.bitPattern):\(hash)"
+        guard let hash, let resourceKey else { return nil }
+        return "\(resourceKey):\(hash)"
+    }
+    public var resourceKey: String? {
+        guard hash != nil, !item.isLive else { return nil }
+        return "\(item.isVideo):\(item.width)x\(item.height):\(item.duration.bitPattern)"
     }
 }
 
 public struct ScanCheckpoint: Codable, Sendable {
+    public static let matchingRevision = 2
     public var schema = 1
     public var runtime: String
     public var records: [String: ScanRecord] = [:]
     public var groups: [MatchGroup] = []
     public var complete = false
     public init(runtime: String) { self.runtime = runtime }
+    public var checkedCount: Int { records.values.lazy.filter(\.isCompared).count }
+
+    public mutating func resetComparisons() {
+        records = records.mapValues { record in
+            var value = record; value.comparisonRevision = nil; return value
+        }
+        groups.removeAll { $0.kind != .exact }
+        complete = false
+    }
 
     public mutating func reconcile(_ items: [MediaItem], runtime: String, retryUnavailable: Bool) {
         guard self.runtime == runtime, schema == 1 else { self = ScanCheckpoint(runtime: runtime); return }
@@ -36,16 +56,29 @@ public struct ScanCheckpoint: Codable, Sendable {
             return !retryUnavailable || record.hash != nil
         }
         groups = groups.compactMap { group in
-            let members = group.members.filter { records[$0]?.hash != nil }
+            let members = group.members.filter {
+                guard let record = records[$0], record.hash != nil else { return false }
+                return group.kind == .exact || record.isCompared
+            }
             return members.count > 1 ? MatchGroup(kind: group.kind, members: members) : nil
         }
-        if records.count != items.count { complete = false }
+        if checkedCount != items.count { complete = false }
     }
 
     public var exactCandidates: Set<String> {
         var buckets: [String: [String]] = [:]
         for (id, record) in records { if let key = record.exactKey { buckets[key, default: []].append(id) } }
-        return Set(buckets.values.filter { $0.count > 1 }.flatMap { $0 })
+        var candidates = Set(buckets.values.filter { $0.count > 1 }.flatMap { $0 })
+        // Similar previews can have different tiny hashes. Verify their actual bytes
+        // when the original media metadata is compatible, never infer equality here.
+        for group in groups where group.kind != .exact {
+            var compatible: [String: [String]] = [:]
+            for id in group.members {
+                if let key = records[id]?.resourceKey { compatible[key, default: []].append(id) }
+            }
+            for ids in compatible.values where ids.count > 1 { candidates.formUnion(ids) }
+        }
+        return candidates
     }
 }
 
@@ -55,6 +88,7 @@ public struct ScanProgress: Sendable {
     public var total = 0
     public var unavailable = 0
     public var exactChecked = 0
+    public var verificationUnavailable = 0
     public var verified = 0
     public var verificationTotal = 0
     public var reused = 0

@@ -32,7 +32,7 @@ struct RootView: View {
             if model.canRead {
                 TabView(selection: $model.selectedTab) {
                     Tab("Home", systemImage: "square.grid.2x2", value: 0) { destination { LibraryView() } }
-                    Tab("Clean Up", systemImage: "sparkles", value: 1) { destination { CleanupView() } }
+                    Tab("Clean Up", systemImage: "sparkles", value: 1) { destination { CleanupView() }.id(model.cleanupNavigationID) }
                     Tab("Albums", systemImage: "rectangle.stack", value: 2) { destination { AlbumsView() } }
                 }
             } else { WelcomeView() }

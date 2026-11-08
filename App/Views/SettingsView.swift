@@ -86,7 +86,7 @@ struct SettingsView: View {
                 ])
                 SettingsHelp("Photo & video matching", symbol: "square.on.square", lines: [
                     "Exact matches compare single original resources. Live Photos, RAW pairs, and edited sets are excluded.",
-                    "Similar photos use a conservative shortlist, so some matches may be missed.",
+                    "Similar photos include Live Photo stills. Results use a conservative shortlist, so some matches may be missed. Recheck all matches from Clean Up to compare again without clearing your cache.",
                     "Video suggestions compare five frames, not sound or every frame. You choose what to keep."
                 ])
                 SettingsHelp("iCloud downloads", symbol: "icloud", lines: [

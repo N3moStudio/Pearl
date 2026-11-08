@@ -14,6 +14,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     var backgroundStatus = ""
     var reviewSession: ReviewSession?
     var selectedTab = 0
+    var cleanupNavigationID = UUID()
     var favoriting: Set<String> = []
     var clearingCache = false
     var scanMessage = "Find a little more space."
@@ -162,27 +163,32 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
             await refresh()
         } catch { self.error = "Nothing was cleared from your review queue. \(error.localizedDescription)" }
     }
-    func beginScan() {
+    func openSmartCleanup() {
+        cleanupNavigationID = UUID()
+        selectedTab = 1
+        beginScan()
+    }
+    func beginScan(recheck: Bool = false) {
         guard canRead, !scanning, scanTask == nil, !clearingCache, !items.isEmpty else { return }
         let generation = UUID(); scanGeneration = generation
         scanning = true; stoppingScan = false; scanMessage = "Checking on your iPhone…"
-        if background.request(start: { [weak self] in self?.runScan(generation: generation) }, expiration: { [weak self] in
+        if background.request(start: { [weak self] in self?.runScan(generation: generation, recheck: recheck) }, expiration: { [weak self] in
             self?.stopScan(message: "Background scan paused. Your place is saved.")
         }) {
             backgroundStatus = "You can leave Pearl. Track progress in the Live Activity."
         } else {
             backgroundStatus = "Background scanning isn't available right now. Other Pearl tabs work; leaving the app saves your place."
-            runScan(generation: generation)
+            runScan(generation: generation, recheck: recheck)
         }
     }
-    private func runScan(generation: UUID) {
+    private func runScan(generation: UUID, recheck: Bool) {
         guard scanning, scanGeneration == generation else { background.finish(success: false); return }
         let input = items, network = allowCloud
         scanItems = Dictionary(uniqueKeysWithValues: input.map { ($0.id, $0) })
         scanTask = Task {
             var success = false
             do {
-                let final = try await scanner.scan(input, network: network) { [weak self] progress in
+                let final = try await scanner.scan(input, network: network, recheck: recheck) { [weak self] progress in
                     await self?.updateScan(progress, generation: generation)
                 }
                 guard scanGeneration == generation else { return }

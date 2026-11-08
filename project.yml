@@ -8,8 +8,8 @@ settings:
     SWIFT_VERSION: '6.0'
     SWIFT_STRICT_CONCURRENCY: complete
     TARGETED_DEVICE_FAMILY: '1,2'
-    MARKETING_VERSION: '0.2.2'
-    CURRENT_PROJECT_VERSION: '5'
+    MARKETING_VERSION: '0.2.3'
+    CURRENT_PROJECT_VERSION: '6'
 packages:
   PearlCore:
     path: .
@@ -47,6 +47,16 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         UISupportedInterfaceOrientations~ipad: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         ITSAppUsesNonExemptEncryption: false
+  PearlScanTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [Tests/PearlScanTests]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: Pearl
+      - package: PearlCore
   PearlUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -62,4 +72,4 @@ schemes:
       targets:
         Pearl: all
     test:
-      targets: [PearlUITests]
+      targets: [PearlScanTests, PearlUITests]

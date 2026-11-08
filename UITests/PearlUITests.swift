@@ -53,7 +53,7 @@ final class PearlUITests: XCTestCase {
         capture(app, "Pearl-About-Settings")
         // LabeledContent can expose a combined label or an accessibility value.
         let version = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS '0.2.2' OR value == '0.2.2'")).firstMatch
+            .matching(NSPredicate(format: "label CONTAINS '0.2.3' OR value == '0.2.3'")).firstMatch
         XCTAssertTrue(version.waitForExistence(timeout: 5))
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["settingsScanning"].tap()
@@ -91,11 +91,19 @@ final class PearlUITests: XCTestCase {
     @MainActor func testLocalPhotoAndVideoScan() {
         let app = XCUIApplication(); app.launchArguments = ["--ui-test-clear-scan", "--ui-test-reset-review"]; launchReady(app)
         XCTAssertTrue(app.navigationBars["Pearl"].waitForExistence(timeout: 20))
-        app.tabBars.buttons["Clean Up"].tap()
-        app.buttons["scanButton"].tap()
+        let shortcut = app.buttons["homeSmartCleanup"]
+        XCTAssertTrue(shortcut.waitForExistence(timeout: 10))
+        // Hit the padded edge, not just the icon or text, and require a real scan.
+        shortcut.coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.4)).tap()
+        XCTAssertTrue(app.navigationBars["Clean Up"].waitForExistence(timeout: 10))
         let complete = app.staticTexts["Scan complete. You choose what stays."]
         XCTAssertTrue(complete.waitForExistence(timeout: 120))
         let cleanup = XCTAttachment(screenshot: app.screenshot()); cleanup.name = "Pearl-Clean-Up"; cleanup.lifetime = .keepAlways; add(cleanup)
+        app.buttons["matchesexact"].tap()
+        XCTAssertTrue(app.buttons["matchGroup"].firstMatch.waitForExistence(timeout: 10), "The known byte-for-byte fixture copy must be found")
+        XCTAssertEqual(app.buttons.matching(identifier: "matchGroup").count, 1, "Reencoded photos must not become exact copies")
+        capture(app, "Pearl-Exact-Duplicates")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["matchesphoto"].tap()
         XCTAssertTrue(app.buttons["matchGroup"].firstMatch.waitForExistence(timeout: 10))
         app.buttons["matchGroup"].firstMatch.tap()
@@ -106,6 +114,12 @@ final class PearlUITests: XCTestCase {
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["matchesvideo"].tap()
         XCTAssertTrue(app.buttons["matchGroup"].firstMatch.waitForExistence(timeout: 10), "Synthetic re-encoded videos should match locally")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.buttons["scanOptions"].tap()
+        app.buttons["Recheck all matches"].tap()
+        XCTAssertTrue(complete.waitForExistence(timeout: 120))
+        app.buttons["matchesexact"].tap()
+        XCTAssertTrue(app.buttons["matchGroup"].firstMatch.waitForExistence(timeout: 10), "Rechecking must preserve verified duplicate results")
     }
 
     @MainActor func testMonthReviewFavoriteFilmstripAndContinuousSwipe() {

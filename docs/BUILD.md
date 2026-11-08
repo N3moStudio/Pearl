@@ -1,4 +1,4 @@
-# Pearl 0.2.2 implementation
+# Pearl 0.2.3 implementation
 
 Authorized November 4, 2026. Canonical code: `C:\Users\naith\Documents\GitHub\Photo Cleaner`. Private remote: https://gitlab.com/gajula.naithik/pearl.git. The GitHub remote is retained but unused. The existing GitHub Desktop registration is retained. No desktop input or browser control is required.
 
@@ -22,13 +22,15 @@ The IPA is unsigned and requires personal signing with a compatible sideloader s
 
 ## Matching semantics
 
-Exact matching first shortlists equal perceptual hashes with matching media type, dimensions and duration, then hashes the complete sole original resource of each eligible candidate. Perceptual hashes never establish equality; the shortlist can miss copies. Assets with multiple resources (Live Photos, RAW pairs, edited versions) are deliberately excluded. The result means byte-identical resources, not identical captions, dates, albums or other metadata.
+Exact matching shortlists equal perceptual hashes and visually matched group members with matching media type, dimensions and duration, then hashes the complete sole original resource of each eligible candidate. Perceptual hashes and visual similarity never establish equality; the shortlist can miss copies. Assets with multiple resources (Live Photos, RAW pairs, edited versions) are excluded from exact verification. Live Photo stills now participate in similar-photo comparisons; their motion is not compared. The exact result means byte-identical resources, not identical captions, dates, albums or other metadata.
 
 Photo suggestions use Vision revision-2 distance ≤ 0.24 and require every member of an existing group to match the candidate. No transitive chains and no automatic keeper/deletion selection. The UI reports largest resolution as a factual hint, not a subjective quality claim.
 
 Video suggestions require five frame distances ≤ 0.18, aspect difference ≤ 0.03 and duration difference ≤ the smaller of 0.5 seconds or 2%. Sound is not analyzed. These are **possible similar videos**, never proof that videos are interchangeable.
 
-Candidate retrieval combines up to 32 recent shots within two minutes and bounded perceptual hash bands across dates. Each shortlist is bounded to 160; groups to 20. This avoids an all-pairs scan but can miss crops, heavy edits, trimmed clips, very large groups and some cross-date matches. Thresholds are initial conservative choices, not calibrated confidence percentages.
+Candidate retrieval combines up to 64 nearby shots within ten minutes and eight 8-bit perceptual-hash bands across dates (Hamming distance at most 12). Date buckets retain candidates after newest-first cache rebuilds, and separate photo/video buckets prevent cross-media eviction. Each date bucket holds 128 IDs, hash bucket 80, shortlist 160 and group 20. This avoids an all-pairs scan but can miss crops, heavy edits, trimmed clips, crowded buckets, very large groups and some cross-date matches. Thresholds are unchanged conservative choices, not calibrated confidence percentages.
+
+Matching revision 2 rechecks legacy comparisons while retaining valid fingerprints and verified original digests. Clean Up's Recheck all matches command does the same on demand; review decisions are separate and remain intact. Home's Smart cleanup selects Clean Up and starts/resumes an idle scan without pausing an existing one. Coverage distinguishes reused work, new checks, unavailable previews, limited Photos access, and failed original verification. The scanner avoids a second disk read of the current fingerprint.
 
 ## Scope and remaining validation
 

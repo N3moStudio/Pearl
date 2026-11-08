@@ -63,7 +63,8 @@ struct LibraryView: View {
         }
     }
     @ViewBuilder private var shortcuts: some View {
-        Button { model.selectedTab = 1 } label: { HomeAction(title: "Smart cleanup", symbol: "sparkles") }
+        Button { model.openSmartCleanup() } label: { HomeAction(title: "Smart cleanup", symbol: "sparkles") }
+            .accessibilityIdentifier("homeSmartCleanup")
         NavigationLink { SwipeLibraryView() } label: { HomeAction(title: "Swipe", symbol: "hand.draw") }
             .accessibilityIdentifier("openSwipe")
         Button { model.selectedTab = 2 } label: { HomeAction(title: "Albums", symbol: "rectangle.stack") }
@@ -84,12 +85,12 @@ private struct HomeAction: View {
             HStack(spacing: 16) {
                 icon
                 Text(title).font(.subheadline.weight(.medium)).foregroundStyle(.primary).frame(maxWidth: .infinity, alignment: .leading)
-            }.pearlCard()
+            }.pearlCard().contentShape(Rectangle())
         } else {
             VStack(spacing: 10) {
                 icon
                 Text(title).font(.subheadline.weight(.medium)).foregroundStyle(.primary).multilineTextAlignment(.center)
-            }.frame(maxWidth: .infinity)
+            }.frame(maxWidth: .infinity).contentShape(Rectangle())
         }
     }
     private var icon: some View {

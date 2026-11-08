@@ -49,6 +49,6 @@ if codesign -d "$app" >/dev/null 2>&1; then codesign --remove-signature "$app"; 
 if codesign -d "$app" >/dev/null 2>&1; then echo 'Expected an unsigned app'; exit 1; fi
 mkdir -p build/package/Payload
 ditto "$app" build/package/Payload/Pearl.app
-(cd build/package && zip -qry ../Pearl-0.2.2.ipa Payload)
-python3 scripts/verify_ipa.py build/Pearl-0.2.2.ipa > build/package-verification.json
+(cd build/package && zip -qry ../Pearl-0.2.3.ipa Payload)
+python3 scripts/verify_ipa.py build/Pearl-0.2.3.ipa > build/package-verification.json
 cat build/package-verification.json

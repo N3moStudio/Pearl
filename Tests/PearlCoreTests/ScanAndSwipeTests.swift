@@ -58,3 +58,46 @@ import Testing
     #expect(SwipeDecision.released(x: -130, y: 20, predictedX: -200, width: 400) == .remove)
     #expect(SwipeDecision.released(x: 50, y: 0, predictedX: 350, width: 400) == .keep)
 }
+
+@Test func legacyCheckpointRechecksMatchesWithoutDiscardingVerifiedBytes() throws {
+    let items = [MediaItem(id: "a"), MediaItem(id: "b")]
+    var saved = ScanCheckpoint(runtime: "r2")
+    for item in items { saved.records[item.id] = ScanRecord(item: item, hash: 42, digest: "same-original", exactAttempted: true) }
+    saved.groups = [MatchGroup(kind: .photo, members: ["a", "b"]), MatchGroup(kind: .exact, members: ["a", "b"])]
+    saved.complete = true
+    // Recreate the actual previous Codable format, which has no revision key.
+    var json = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(saved)) as? [String: Any])
+    var records = try #require(json["records"] as? [String: [String: Any]])
+    for id in records.keys { records[id]?.removeValue(forKey: "comparisonRevision") }
+    json["records"] = records
+    var restored = try JSONDecoder().decode(ScanCheckpoint.self, from: JSONSerialization.data(withJSONObject: json))
+    restored.reconcile(items, runtime: "r2", retryUnavailable: true)
+    #expect(restored.checkedCount == 0)
+    #expect(restored.records.count == 2)
+    #expect(restored.records["a"]?.digest == "same-original")
+    #expect(restored.groups.map(\.kind) == [.exact])
+    #expect(!restored.complete)
+}
+
+@Test func manualRecheckKeepsOriginalVerificationAndRebuildsVisualGroups() {
+    var saved = ScanCheckpoint(runtime: "r2")
+    for id in ["a", "b"] { saved.records[id] = ScanRecord(item: MediaItem(id: id), hash: 3, digest: "verified", exactAttempted: true) }
+    saved.groups = [MatchGroup(kind: .photo, members: ["a", "b"]), MatchGroup(kind: .exact, members: ["a", "b"])]
+    saved.complete = true; saved.resetComparisons()
+    #expect(saved.checkedCount == 0)
+    #expect(saved.records["b"]?.exactAttempted == true)
+    #expect(saved.records["a"]?.hash == 3)
+    #expect(saved.groups.map(\.kind) == [.exact])
+    #expect(!saved.complete)
+}
+
+@Test func visuallyMatchingDifferentHashesStillGetOriginalVerification() {
+    var saved = ScanCheckpoint(runtime: "r2")
+    saved.records["a"] = ScanRecord(item: MediaItem(id: "a"), hash: 1)
+    saved.records["b"] = ScanRecord(item: MediaItem(id: "b"), hash: 2)
+    saved.records["live"] = ScanRecord(item: MediaItem(id: "live", isLive: true), hash: 3)
+    saved.records["unrelated"] = ScanRecord(item: MediaItem(id: "unrelated"), hash: 4)
+    saved.groups = [MatchGroup(kind: .photo, members: ["a", "b", "live"])]
+    #expect(saved.exactCandidates == ["a", "b"])
+    #expect(saved.groups.allSatisfy { $0.kind != .exact }, "Shortlisting is never proof of equal originals")
+}

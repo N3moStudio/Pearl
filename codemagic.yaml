@@ -1,6 +1,23 @@
 # Private GitLab source; manually started personal-account M2 builds only.
 # No automatic triggers, publishing, billing changes or signing secrets.
 workflows:
+  pearl-scan-diagnostics:
+    name: Pearl private Vision diagnostics
+    instance_type: mac_mini_m2
+    max_build_duration: 15
+    environment:
+      xcode: "26.6"
+      vars:
+        PEARL_SCAN_DIAGNOSTICS: 1
+    scripts:
+      - name: Prepare XcodeGen
+        script: command -v xcodegen >/dev/null || brew install xcodegen
+      - name: Diagnose native image matching
+        script: bash scripts/build.sh
+    artifacts:
+      - build/*.log
+      - build/*.xcresult
+      - build/screenshots/**
   pearl-private-ipa:
     name: Pearl private IPA and simulator checks
     instance_type: mac_mini_m2

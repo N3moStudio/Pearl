@@ -30,11 +30,14 @@ xcrun simctl install "$udid" build/Simulator/Build/Products/Debug-iphonesimulato
 xcrun simctl addmedia "$udid" build/fixtures/*.jpg build/fixtures/*.mov
 xcrun simctl privacy "$udid" grant photos com.n3mostudio.pearl
 test_status=0
+test_selection=()
+if [[ "${PEARL_SCAN_DIAGNOSTICS:-0}" == 1 ]]; then test_selection=(-only-testing:PearlScanTests); fi
 run_build build/ui-tests.log xcodebuild -project Pearl.xcodeproj -scheme Pearl -configuration Debug \
   -destination "platform=iOS Simulator,id=$udid" -derivedDataPath build/Simulator \
   -parallel-testing-enabled NO -maximum-concurrent-test-simulator-destinations 1 \
-  -resultBundlePath build/UI.xcresult test-without-building || test_status=$?
+  -resultBundlePath build/UI.xcresult "${test_selection[@]}" test-without-building || test_status=$?
 xcrun xcresulttool export attachments --path build/UI.xcresult --output-path build/screenshots
+if [[ "${PEARL_SCAN_DIAGNOSTICS:-0}" == 1 ]]; then exit "$test_status"; fi
 [[ "$test_status" == 0 ]] || exit "$test_status"
 
 # Only produce a deliverable after the simulator checks succeed.

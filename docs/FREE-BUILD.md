@@ -1,6 +1,6 @@
 # Private GitLab and free Codemagic builds
 
-Current authorization, November 5, 2026: use CLI/API access only. Keep the existing checkout at `C:\Users\naith\Documents\GitHub\Photo Cleaner`; its `gitlab` remote is `https://gitlab.com/gajula.naithik/pearl.git`. The GitHub remote stays configured but unused while the account is suspended. GitLab source is private, with GitLab CI/CD and Pages disabled.
+Current authorization, November 5, 2026: use CLI/API access only. Keep the existing checkout at `C:\Users\naith\Documents\GitHub\Photo Cleaner`; its `gitlab` remote is `https://gitlab.com/gajula.naithik/pearl.git`. The user subsequently requested GitHub synchronization on November 7; access and private visibility were verified. `origin` is `https://github.com/N3moStudio/Pearl.git`, and `main` tracks `origin/main`. Keep GitLab synchronized for the existing Codemagic connection. GitLab source is private, with GitLab CI/CD and Pages disabled.
 
 Codemagic uses a repository-specific read-only SSH deployment key. Private keys and the encrypted API token stay outside the repository and must never appear in command output or logs. The personal account, rather than a paid Team, owns the app.
 

@@ -1,6 +1,6 @@
 # Pearl 0.2.3 implementation
 
-Authorized November 4, 2026. Canonical code: `C:\Users\naith\Documents\GitHub\Photo Cleaner`. Private remote: https://gitlab.com/gajula.naithik/pearl.git. The GitHub remote is retained but unused. The existing GitHub Desktop registration is retained. No desktop input or browser control is required.
+Authorized November 4, 2026. Canonical code: `C:\Users\naith\Documents\GitHub\Photo Cleaner`. Private source origin: https://github.com/N3moStudio/Pearl.git. The private GitLab remote at https://gitlab.com/gajula.naithik/pearl.git remains the Codemagic build source; both are synchronized. The existing GitHub Desktop registration is retained. No desktop input or browser control is required.
 
 ## Build
 

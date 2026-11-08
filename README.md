@@ -4,7 +4,7 @@ A calm, native iPhone app for browsing, organizing, and reviewing a large photo 
 
 **Latest delivered: Pearl 0.2.3 (6), November 7, 2026.** Built privately on Codemagic's free personal M2: 20 core tests, three native Mac Vision cases, seven iOS unit tests and ten simulator UI tests passed. The verified unsigned IPA replaced only the older Pearl IPA in the usual delivery folder. Personal signing and physical-device acceptance remain separate.
 
-This version includes the Native Settings Kit adoption and scanner/Home shortcut corrections. The same local checkout and private GitLab repository are retained; no paid billing, browser automation, desktop control or public release was used.
+This version includes the Native Settings Kit adoption and scanner/Home shortcut corrections. The same local checkout is retained, with synchronized private GitHub (`origin`) and GitLab repositories; no paid billing, browser automation, desktop control or public release was used.
 
 [Latest IPA verification](docs/VERIFICATION-0.2.3.md) · [Settings adoption and screenshots](docs/SETTINGS-0.2.3.md) · [Settings feature map](docs/SETTINGS-FEATURE-MAP.md) · [Scanner investigation](docs/SCAN-0.2.3.md) · [Private build instructions](docs/FREE-BUILD.md)
 

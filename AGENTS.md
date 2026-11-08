@@ -4,7 +4,7 @@
 
 Implementation authorized November 4, 2026: develop the Pearl app, local similar photo/video detection, and core cleanup features. Keep all code in this repository alongside the user's other repositories under `C:\Users\naith\Documents\GitHub`. Use background commands only.
 
-The user's latest November 5, 2026 instruction authorizes private GitLab hosting, Codemagic cloud Mac builds, appropriate tests, and unsigned IPA delivery. Reuse this checkout; add/use the `gitlab` remote without duplicating the local project. GitHub is suspended: preserve its remote/history but do not contact it. Use CLI/API access only, with no browser automation or desktop control. Use the personal account's free `mac_mini_m2` allowance, check remaining minutes before dispatch, and never enable paid billing. Let Pearl queue behind Tendelm; do not modify Tendelm or cancel its build. Keep credentials outside the repository and never print tokens. Do not claim native build/test success for new source changes based on an older tested IPA.
+The user's latest November 5, 2026 instruction authorizes private GitLab hosting, Codemagic cloud Mac builds, appropriate tests, and unsigned IPA delivery. Reuse this checkout; add/use the `gitlab` remote without duplicating the local project. The latest November 7 request explicitly authorizes syncing all current source to the private GitHub `origin` (`N3moStudio/Pearl`). GitHub access has been verified again; the earlier suspension restriction is superseded. Keep the GitLab remote for the existing Codemagic build connection. Use CLI/API access only, with no browser automation or desktop control. Use the personal account's free `mac_mini_m2` allowance, check remaining minutes before dispatch, and never enable paid billing. Let Pearl queue behind Tendelm; do not modify Tendelm or cancel its build. Keep credentials outside the repository and never print tokens. Do not claim native build/test success for new source changes based on an older tested IPA.
 
 ## Accepted product decisions
 
@@ -27,7 +27,7 @@ Validate changes at the right level. Static analysis and conceptual images do no
 
 Protect real personal media and signing credentials. No personal-photo fixtures in Git, logs, or remote services. Keep any temporary source downloads under ignored `research/evidence/`.
 
-The active private remote is `https://gitlab.com/gajula.naithik/pearl.git`; the preserved GitHub remote is `N3moStudio/Pearl`. Keep the canonical local folder and GitHub Desktop registration. Do not make either repository public or publish a release without a request.
+The private GitHub source remote is `origin` at `https://github.com/N3moStudio/Pearl.git`; `main` tracks `origin/main`. The private `gitlab` remote at `https://gitlab.com/gajula.naithik/pearl.git` remains the Codemagic build source. Keep both synchronized after authorized source updates. Keep the canonical local folder and GitHub Desktop registration. Do not make either repository public or publish a release without a request.
 
 ## IPA delivery
 

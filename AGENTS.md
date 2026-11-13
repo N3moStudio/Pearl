@@ -1,5 +1,9 @@
 # Photo Cleaner project instructions
 
+## November 12 scope update
+
+The user explicitly authorized making GitHub `N3moStudio/Pearl` public, adding restrictive rights-reserved terms for original Pearl code, and building through GitHub Actions. This supersedes earlier GitHub-private-only instructions below. Keep GitLab private and preserve third-party licenses. Never put credentials or personal media in either repository. The requested smaller settings, simplified navigation and compression feature are still pending; do not describe the existing 0.2.3 build as including them.
+
 ## Current phase
 
 Implementation authorized November 4, 2026: develop the Pearl app, local similar photo/video detection, and core cleanup features. Keep all code in this repository alongside the user's other repositories under `C:\Users\naith\Documents\GitHub`. Use background commands only.

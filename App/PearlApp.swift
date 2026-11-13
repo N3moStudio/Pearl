@@ -28,7 +28,7 @@ struct PearlApp: App {
 struct RootView: View {
     @Environment(PearlModel.self) private var model
     @Environment(PearlAppearance.self) private var appearance
-    @State private var settings = false
+
     var body: some View {
         @Bindable var model = model
         Group {
@@ -36,7 +36,7 @@ struct RootView: View {
                 destination { LibraryView() }
             } else { WelcomeView() }
         }
-        .sheet(isPresented: $settings) {
+        .sheet(isPresented: $model.showSettings) {
             SettingsView().modifier(PearlAppearanceRoot())
                 .preferredColorScheme(appearance.theme.kit?.preferredColorScheme)
         }
@@ -58,7 +58,7 @@ struct RootView: View {
         NavigationStack {
             content().modifier(PearlNavigationSurface()).toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Settings", systemImage: "slider.horizontal.3") { settings = true }
+                    Button("Settings", systemImage: "slider.horizontal.3") { model.showSettings = true }
                 }
                 ReviewQueueToolbar()
             }

@@ -25,6 +25,8 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     var ready = false
     var allowCloud = false
     var showQueue = false
+    var showSettings = false
+    var analysisRestored = false
     @ObservationIgnored private let store = ReviewStore()
     @ObservationIgnored private let scanner = SimilarityScanner()
     @ObservationIgnored private let background = BackgroundScan()
@@ -59,6 +61,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
             #endif
             ready = true; await refresh()
             scan = await scanner.restore(items)
+            analysisRestored = true
             if scan.checked > 0 { scanMessage = scan.phase == .complete ? "Scan complete. You choose what stays." : "Your place is saved. Ready to resume." }
         }
         catch { self.error = "Your saved review could not be opened. It has been left untouched. \(error.localizedDescription)" }

@@ -55,11 +55,14 @@ struct CleanupView: View {
                 Text("You choose what stays.").font(.subheadline).foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(.vertical)
             }.padding(20).frame(maxWidth: 750).frame(maxWidth: .infinity)
         }.background(colors.canvas).navigationTitle("Smart Cleanup")
-        .task {
+        .task(id: model.analysisRestored) {
             // Start once for a fresh library. Returning never pauses or restarts active work.
-            if model.scan.total == 0 { model.beginScan() }
+            if model.analysisRestored && model.scan.checked == 0 && model.scan.phase != .complete { model.beginScan() }
         }
         .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Settings", systemImage: "slider.horizontal.3") { model.showSettings = true }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu("Scan options", systemImage: "ellipsis.circle") {
                     Button("Recheck all matches", systemImage: "arrow.clockwise") { model.beginScan(recheck: true) }

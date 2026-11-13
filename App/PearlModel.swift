@@ -60,6 +60,13 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
             if ProcessInfo.processInfo.arguments.contains("--ui-test-reset-review") { queue = ReviewQueue() }
             #endif
             ready = true; await refresh()
+            // PhotoKit can request another refresh during startup. The superseded
+            // fetch returns without installing its items; wait for the current
+            // fetch before reconciling the checkpoint against the library.
+            while loading {
+                try Task.checkCancellation()
+                try await Task.sleep(for: .milliseconds(25))
+            }
             scan = await scanner.restore(items)
             analysisRestored = true
             if scan.checked > 0 { scanMessage = scan.phase == .complete ? "Scan complete. You choose what stays." : "Your place is saved. Ready to resume." }

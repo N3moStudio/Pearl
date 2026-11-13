@@ -55,10 +55,6 @@ struct CleanupView: View {
                 Text("You choose what stays.").font(.subheadline).foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(.vertical)
             }.padding(20).frame(maxWidth: 750).frame(maxWidth: .infinity)
         }.background(colors.canvas).navigationTitle("Smart Cleanup")
-        .task(id: model.analysisRestored) {
-            // Start once for a fresh library. Returning never pauses or restarts active work.
-            if model.analysisRestored && model.scan.checked == 0 && model.scan.phase != .complete { model.beginScan() }
-        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Settings", systemImage: "slider.horizontal.3") { model.showSettings = true }

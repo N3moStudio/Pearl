@@ -118,6 +118,7 @@ final class PearlUITests: XCTestCase {
         // Hit the padded edge, not just the icon or text, and require a real scan.
         shortcut.coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.4)).tap()
         XCTAssertTrue(app.navigationBars["Smart Cleanup"].waitForExistence(timeout: 10))
+        app.buttons["scanButton"].tap()
         let complete = app.staticTexts["Scan complete. You choose what stays."]
         XCTAssertTrue(complete.waitForExistence(timeout: 120))
         let cleanup = XCTAttachment(screenshot: app.screenshot()); cleanup.name = "Pearl-Clean-Up"; cleanup.lifetime = .keepAlways; add(cleanup)
@@ -244,7 +245,7 @@ final class PearlUITests: XCTestCase {
         XCTAssertTrue(app.buttons["homeSmartCleanup"].waitForExistence(timeout: 20))
         app.buttons["homeSmartCleanup"].tap()
         let scan = app.buttons["scanButton"]
-        waitEnabled(scan, true)
+        waitEnabled(scan, true); scan.tap()
         app.navigationBars.buttons["BackButton"].firstMatch.tap()
         app.buttons["mediaAlbums"].tap()
         XCTAssertTrue(app.navigationBars["Albums"].waitForExistence(timeout: 5))
@@ -275,6 +276,7 @@ final class PearlUITests: XCTestCase {
         launchReady(app)
         XCTAssertTrue(app.buttons["homeSmartCleanup"].waitForExistence(timeout: 20))
         app.buttons["homeSmartCleanup"].tap(); waitEnabled(app.buttons["scanButton"], true)
+        app.buttons["scanButton"].tap()
         let granted = app.staticTexts["You can leave Pearl. Track progress in the Live Activity."].exists
         XCUIDevice.shared.press(.home)
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: 10) || app.state == .runningBackgroundSuspended)
@@ -409,6 +411,7 @@ final class PearlUITests: XCTestCase {
         let app = XCUIApplication(); app.launchArguments = ["--ui-test-clear-scan", "--ui-test-slow-scan"]; launchReady(app)
         app.buttons["homeSmartCleanup"].tap()
         XCTAssertTrue(app.buttons["scanButton"].waitForExistence(timeout: 10))
+        app.buttons["scanButton"].tap()
         app.buttons["Settings"].tap(); app.buttons["settingsScanning"].tap()
         XCTAssertFalse(app.switches["scanCloudDownloads"].isEnabled)
         app.navigationBars.buttons["BackButton"].firstMatch.tap(); app.buttons["settingsAppearance"].tap()

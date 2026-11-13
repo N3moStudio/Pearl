@@ -6,6 +6,10 @@ on:
         description: Run core tests only
         type: boolean
         default: false
+      validation_only:
+        description: Validate native UI without packaging an IPA
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -55,6 +59,8 @@ jobs:
           grep 'Expectation failed' "$RUNNER_TEMP/checkpoint-mutation.log"
       - name: Build and verify
         if: ${{ !inputs.tests_only }}
+        env:
+          PEARL_VALIDATE_ONLY: ${{ inputs.validation_only && '1' || '0' }}
         run: bash scripts/build.sh
       - uses: actions/upload-artifact@v4
         if: ${{ !inputs.tests_only && always() }}

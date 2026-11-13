@@ -2,13 +2,33 @@ import XCTest
 import UIKit
 
 final class PearlUITests: XCTestCase {
+    @MainActor func testHomeNavigationAndOrderSettings() {
+        let app = XCUIApplication(); launchReady(app)
+        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        let albums = app.buttons["mediaAlbums"], photos = app.buttons["mediaPhotos"]
+        XCTAssertTrue(albums.waitForExistence(timeout: 10))
+        XCTAssertLessThan(albums.frame.minX, photos.frame.minX)
+        XCTAssertEqual(albums.frame.minY, photos.frame.minY, accuracy: 2)
+        albums.tap()
+        XCTAssertTrue(app.navigationBars["Albums"].waitForExistence(timeout: 5))
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.buttons["homeSmartCleanup"].tap()
+        XCTAssertTrue(app.navigationBars["Smart Cleanup"].waitForExistence(timeout: 5))
+        let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5))
+        edge.press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.85, dy: 0.5)))
+        XCTAssertTrue(app.navigationBars["Pearl"].waitForExistence(timeout: 5))
+        app.buttons["Settings"].tap()
+        app.buttons["settingsHomeOrder"].tap()
+        XCTAssertTrue(app.navigationBars["Home order"].waitForExistence(timeout: 5))
+        capture(app, "Pearl-Home-Order")
+    }
     override func setUp() { super.setUp(); continueAfterFailure = false }
     @MainActor func testLargeTextAndDarkAppearance() {
         let app = XCUIApplication()
         app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL", "--ui-test-dark"]
         launchReady(app)
         XCTAssertTrue(app.navigationBars["Pearl"].waitForExistence(timeout: 20))
-        XCTAssertTrue(app.tabBars.buttons["Clean Up"].isHittable)
+        XCTAssertTrue(app.buttons["homeSmartCleanup"].isHittable)
         app.swipeUp()
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Pearl-Large-Text-Dark"; screenshot.lifetime = .keepAlways; add(screenshot)
@@ -97,7 +117,7 @@ final class PearlUITests: XCTestCase {
         XCTAssertTrue(shortcut.waitForExistence(timeout: 10))
         // Hit the padded edge, not just the icon or text, and require a real scan.
         shortcut.coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.4)).tap()
-        XCTAssertTrue(app.navigationBars["Clean Up"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Smart Cleanup"].waitForExistence(timeout: 10))
         let complete = app.staticTexts["Scan complete. You choose what stays."]
         XCTAssertTrue(complete.waitForExistence(timeout: 120))
         let cleanup = XCTAttachment(screenshot: app.screenshot()); cleanup.name = "Pearl-Clean-Up"; cleanup.lifetime = .keepAlways; add(cleanup)
@@ -217,19 +237,20 @@ final class PearlUITests: XCTestCase {
         }
     }
 
-    @MainActor func testScanContinuesAcrossTabsAndRestoresAfterRelaunch() {
+    @MainActor func testScanContinuesAcrossPagesAndRestoresAfterRelaunch() {
         let app = XCUIApplication()
         app.launchArguments = ["--ui-test-clear-scan", "--ui-test-slow-scan"]
         launchReady(app)
-        XCTAssertTrue(app.tabBars.buttons["Clean Up"].waitForExistence(timeout: 20))
-        app.tabBars.buttons["Clean Up"].tap()
+        XCTAssertTrue(app.buttons["homeSmartCleanup"].waitForExistence(timeout: 20))
+        app.buttons["homeSmartCleanup"].tap()
         let scan = app.buttons["scanButton"]
-        waitEnabled(scan, true); scan.tap()
-        app.tabBars.buttons["Albums"].tap()
+        waitEnabled(scan, true)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        app.buttons["mediaAlbums"].tap()
         XCTAssertTrue(app.navigationBars["Albums"].waitForExistence(timeout: 5))
-        app.tabBars.buttons["Home"].tap()
+        app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.navigationBars["Pearl"].exists)
-        app.tabBars.buttons["Clean Up"].tap()
+        app.buttons["homeSmartCleanup"].tap()
         let progress = app.staticTexts["scanProgress"]
         XCTAssertTrue(progress.waitForExistence(timeout: 10))
         let advanced = NSPredicate(format: "label BEGINSWITH '5 of' OR label BEGINSWITH '10 of' OR label CONTAINS 'items checked'")
@@ -240,7 +261,7 @@ final class PearlUITests: XCTestCase {
         waitEnabled(scan, true)
         let saved = progress.label
         app.terminate(); app.launchArguments = []; launchReady(app)
-        XCTAssertTrue(app.tabBars.buttons["Clean Up"].waitForExistence(timeout: 20)); app.tabBars.buttons["Clean Up"].tap()
+        XCTAssertTrue(app.buttons["homeSmartCleanup"].waitForExistence(timeout: 20)); app.buttons["homeSmartCleanup"].tap()
         XCTAssertTrue(app.staticTexts["Your place is saved. Ready to resume."].waitForExistence(timeout: 10))
         XCTAssertEqual(app.staticTexts["scanProgress"].label, saved)
         app.buttons["scanButton"].tap()
@@ -252,9 +273,8 @@ final class PearlUITests: XCTestCase {
     @MainActor func testLeavingAppUsesBackgroundGrantOrSavedFallback() {
         let app = XCUIApplication(); app.launchArguments = ["--ui-test-clear-scan", "--ui-test-slow-scan"]
         launchReady(app)
-        XCTAssertTrue(app.tabBars.buttons["Clean Up"].waitForExistence(timeout: 20))
-        app.tabBars.buttons["Clean Up"].tap(); waitEnabled(app.buttons["scanButton"], true)
-        app.buttons["scanButton"].tap()
+        XCTAssertTrue(app.buttons["homeSmartCleanup"].waitForExistence(timeout: 20))
+        app.buttons["homeSmartCleanup"].tap(); waitEnabled(app.buttons["scanButton"], true)
         let granted = app.staticTexts["You can leave Pearl. Track progress in the Live Activity."].exists
         XCUIDevice.shared.press(.home)
         XCTAssertTrue(app.wait(for: .runningBackground, timeout: 10) || app.state == .runningBackgroundSuspended)
@@ -284,7 +304,7 @@ final class PearlUITests: XCTestCase {
         defer { removeUIInterruptionMonitor(permissionMonitor) }
         app.launch()
         let access = app.buttons["chooseAccess"]
-        let started = NSPredicate { _, _ in access.exists || app.tabBars.buttons["Home"].exists }
+        let started = NSPredicate { _, _ in access.exists || app.navigationBars["Pearl"].exists }
         let result = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: started, object: app)], timeout: 20)
         if result != .completed { capture(app, "Pearl-Launch-Failure") }
         XCTAssertEqual(result, .completed)
@@ -299,7 +319,7 @@ final class PearlUITests: XCTestCase {
             let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
             let allow = springboard.buttons["Allow Full Access"]
             let appAllow = app.buttons["Allow Full Access"]
-            let prompt = NSPredicate { _, _ in allow.exists || appAllow.exists || app.tabBars.buttons["Home"].exists }
+            let prompt = NSPredicate { _, _ in allow.exists || appAllow.exists || app.navigationBars["Pearl"].exists }
             let promptResult = XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: prompt, object: app)], timeout: 15)
             if promptResult != .completed {
                 let screenshot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
@@ -310,7 +330,7 @@ final class PearlUITests: XCTestCase {
             if allow.exists { allow.tap() }
             else if appAllow.exists { appAllow.tap() }
         }
-        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 20))
+        XCTAssertTrue(app.navigationBars["Pearl"].waitForExistence(timeout: 20))
     }
 
     @MainActor private func waitEnabled(_ element: XCUIElement, _ enabled: Bool) {
@@ -396,7 +416,7 @@ final class PearlUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Appearance"].exists)
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["closeSettings"].tap()
-        XCTAssertTrue(app.navigationBars["Clean Up"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Smart Cleanup"].waitForExistence(timeout: 5))
         let scan = app.buttons["scanButton"]
         XCTAssertTrue(scan.label == "Pause scan" || app.staticTexts["Scan complete. You choose what stays."].exists)
         if scan.label == "Pause scan" { scan.tap(); XCTAssertTrue(app.staticTexts["Scan paused. Your place is saved."].waitForExistence(timeout: 15)) }

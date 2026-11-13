@@ -13,8 +13,8 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     var stoppingScan = false
     var backgroundStatus = ""
     var reviewSession: ReviewSession?
-    var selectedTab = 0
-    var cleanupNavigationID = UUID()
+    let homeOrder = HomeOrder()
+    var categoryIDs: [HomeCategory: Set<String>] = [:]
     var favoriting: Set<String> = []
     var clearingCache = false
     var scanMessage = "Find a little more space."
@@ -76,7 +76,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
             }
             loadGeneration += 1
             loading = false
-            stopScan(); items = []; itemLookup = [:]; albums = []; scan.groups = []; return
+            stopScan(); categoryIDs = [:]; items = []; itemLookup = [:]; albums = []; scan.groups = []; return
         }
         // Register only after the person has chosen photo access on the welcome screen.
         if !observingPhotos {
@@ -88,11 +88,12 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         loading = true
         async let fetched = PhotoAccess.library()
         async let collections = AlbumAccess.all()
-        let (newItems, newAlbums) = await (fetched, collections)
+        async let categories = PhotoAccess.categoryMembership()
+        let (newItems, newAlbums, newCategories) = await (fetched, collections, categories)
         guard generation == loadGeneration else { return }
         let previousVersions = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0.modified) })
         let changed = Set(newItems.filter { previousVersions[$0.id] != nil && previousVersions[$0.id] != $0.modified }.map(\.id))
-        items = newItems; albums = newAlbums; loading = false
+        items = newItems; albums = newAlbums; categoryIDs = newCategories; loading = false
         itemLookup = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
         let accessible = Set(items.map(\.id))
         queue.reconcile(accessible: accessible)
@@ -163,11 +164,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
             await refresh()
         } catch { self.error = "Nothing was cleared from your review queue. \(error.localizedDescription)" }
     }
-    func openSmartCleanup() {
-        cleanupNavigationID = UUID()
-        selectedTab = 1
-        beginScan()
-    }
+
     func beginScan(recheck: Bool = false) {
         guard canRead, !scanning, scanTask == nil, !clearingCache, !items.isEmpty else { return }
         let generation = UUID(); scanGeneration = generation

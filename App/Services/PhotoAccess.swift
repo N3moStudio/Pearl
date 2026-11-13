@@ -4,6 +4,23 @@ import AVFoundation
 import PearlCore
 
 enum PhotoAccess {
+    @concurrent static func categoryMembership() async -> [HomeCategory: Set<String>] {
+        var result: [HomeCategory: Set<String>] = [:]
+        let options = PHFetchOptions()
+        options.includeHiddenAssets = false
+        for category in HomeCategory.allCases {
+            guard let subtype = category.smartAlbum else { continue }
+            var ids = Set<String>()
+            PHAssetCollection.fetchAssetCollections(with: .smartAlbum, subtype: subtype, options: nil)
+                .enumerateObjects { collection, _, _ in
+                    PHAsset.fetchAssets(in: collection, options: options).enumerateObjects { asset, _, _ in
+                        ids.insert(asset.localIdentifier)
+                    }
+                }
+            result[category] = ids
+        }
+        return result
+    }
     @concurrent static func library() async -> [MediaItem] {
         let options = PHFetchOptions()
         options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]

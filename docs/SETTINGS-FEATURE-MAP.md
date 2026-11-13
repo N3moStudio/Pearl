@@ -1,5 +1,9 @@
 # Pearl settings adoption map
 
+## Home navigation update
+
+Existing settings, permissions, appearance keys, scan controls, cache actions and review storage remain unchanged. New Settings > Your library > Home order stores stable category IDs in `pearl.home.order`. Native numbered reorder rows change Home's row-major grid immediately; restore-default affects only this key. Albums moves from its tab/shortcut to the first Home grid tile by default; creation and add-to-album remain. Smart Cleanup moves from its tab to Home's native pushed destination; app-owned scan/background/checkpoint lifetime remains unchanged. No custom back gesture or navigation-root recreation is introduced.
+
 Baseline: `e2dcba335fc202d4e2e8f4017d6aff3ef2446852`; clean tracked tree. Scanner fixes and diagnostics already belong to the active task and are preserved. Native Settings Kit 0.1.0 is adopted into this existing checkout, with iOS 18 support unchanged. Latest user scope permits simulator validation, not another IPA or release.
 
 | Existing setting/action | Current model / storage | Current location → new location | Preserved behavior / checks |

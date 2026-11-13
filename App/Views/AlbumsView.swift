@@ -54,7 +54,7 @@ struct AlbumPicker: View {
                         Task { await model.addToAlbum(ids, album: album); dismiss() }
                     }.disabled(adding)
                 }
-                if model.albums.isEmpty { Text("Create an album in the Albums tab first.") }
+                if model.albums.isEmpty { Text("Create an album from Albums on Home first.") }
             }.navigationTitle("Add to album").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cancel") { dismiss() }.disabled(adding) } }
                 .interactiveDismissDisabled(adding)

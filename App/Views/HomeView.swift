@@ -28,7 +28,7 @@ struct LibraryView: View {
                 if typeSize.isAccessibilitySize { VStack(spacing: 14) { shortcuts }.buttonStyle(.plain) }
                 else { HStack(alignment: .top, spacing: 20) { shortcuts }.buttonStyle(.plain) }
                 if model.scanning {
-                    Button { model.selectedTab = 1 } label: {
+                    NavigationLink { CleanupView() } label: {
                         HStack {
                             OrbStatus(title: model.scan.detail)
                             Spacer()
@@ -37,15 +37,16 @@ struct LibraryView: View {
                     }.buttonStyle(.plain)
                 }
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: typeSize.isAccessibilitySize ? 1 : 2), spacing: 10) {
-                    media("Photos", symbol: "photo", items: model.items.filter { !$0.isVideo })
-                    media("Videos", symbol: "play.rectangle", items: model.items.filter(\.isVideo))
-                    NavigationLink { GroupList(title: "Similar photos", kind: .photo) } label: {
-                        PhotoTile(title: "Similars", subtitle: "\(model.scan.groups.filter { $0.kind == .photo }.count) groups", symbol: "photo.stack",
-                                  cover: model.scan.groups.first(where: { $0.kind == .photo })?.members.first.flatMap(model.item))
-                    }.buttonStyle(.plain)
-                    media("Screenshots", symbol: "viewfinder", items: model.items.filter(\.isScreenshot))
-                    media("Live Photos", symbol: "livephoto", items: model.items.filter(\.isLive))
-                    media("Favorites", symbol: "heart", items: model.items.filter(\.favorite))
+                    ForEach(model.homeOrder.categories) { category in
+                        if category == .albums {
+                            NavigationLink { AlbumsView() } label: {
+                                PhotoTile(title: "Albums", subtitle: "\(model.albums.count) albums", symbol: category.symbol,
+                                          cover: model.albums.first?.cover.flatMap(model.item))
+                            }.buttonStyle(.plain).accessibilityIdentifier("mediaAlbums")
+                        } else {
+                            media(category.title, symbol: category.symbol, items: categoryItems(category))
+                        }
+                    }
                 }
                 if model.items.isEmpty && !model.loading {
                     ContentUnavailableView("A fresh start", systemImage: "photo", description: Text("Your accessible photos and videos will appear here."))
@@ -65,11 +66,17 @@ struct LibraryView: View {
         }
     }
     @ViewBuilder private var shortcuts: some View {
-        Button { model.openSmartCleanup() } label: { HomeAction(title: "Smart cleanup", symbol: "sparkles") }
+        NavigationLink { CleanupView() } label: { HomeAction(title: "Smart cleanup", symbol: "sparkles") }
             .accessibilityIdentifier("homeSmartCleanup")
         NavigationLink { SwipeLibraryView() } label: { HomeAction(title: "Swipe", symbol: "hand.draw") }
             .accessibilityIdentifier("openSwipe")
-        Button { model.selectedTab = 2 } label: { HomeAction(title: "Albums", symbol: "rectangle.stack") }
+    }
+    private func categoryItems(_ category: HomeCategory) -> [MediaItem] {
+        switch category {
+        case .photos: model.items.filter { !$0.isVideo }
+        case .videos: model.items.filter(\.isVideo)
+        default: model.items.filter { model.categoryIDs[category]?.contains($0.id) == true }
+        }
     }
     private func media(_ title: String, symbol: String, items: [MediaItem]) -> some View {
         NavigationLink { MediaGrid(title: title, items: items) } label: {

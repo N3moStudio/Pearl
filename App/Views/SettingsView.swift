@@ -19,6 +19,7 @@ struct SettingsView: View {
                     }.accessibilityIdentifier("settingsAppearance")
                 }
                 SettingsGroup("Your library") {
+                    NavigationLink { HomeOrderView() } label: { SettingsRow("Home order", symbol: "arrow.up.arrow.down") }.accessibilityIdentifier("settingsHomeOrder")
                     NavigationLink { photoAccess } label: {
                         SettingsRow("Photo access", symbol: "photo.on.rectangle", value: accessSummary)
                     }.accessibilityIdentifier("settingsPhotoAccess")

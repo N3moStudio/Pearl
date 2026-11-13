@@ -54,7 +54,11 @@ struct CleanupView: View {
                     .font(.footnote).foregroundStyle(.secondary)
                 Text("You choose what stays.").font(.subheadline).foregroundStyle(.secondary).frame(maxWidth: .infinity).padding(.vertical)
             }.padding(20).frame(maxWidth: 750).frame(maxWidth: .infinity)
-        }.background(colors.canvas).navigationTitle("Clean Up")
+        }.background(colors.canvas).navigationTitle("Smart Cleanup")
+        .task {
+            // Start once for a fresh library. Returning never pauses or restarts active work.
+            if model.scan.total == 0 { model.beginScan() }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu("Scan options", systemImage: "ellipsis.circle") {

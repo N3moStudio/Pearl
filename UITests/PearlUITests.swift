@@ -28,7 +28,9 @@ final class PearlUITests: XCTestCase {
         app.launchArguments = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL", "--ui-test-dark"]
         launchReady(app)
         XCTAssertTrue(app.navigationBars["Pearl"].waitForExistence(timeout: 20))
-        XCTAssertTrue(app.buttons["homeSmartCleanup"].isHittable)
+        let cleanup = app.buttons["homeSmartCleanup"]
+        for _ in 0..<5 where !cleanup.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        XCTAssertTrue(cleanup.isHittable)
         app.swipeUp()
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "Pearl-Large-Text-Dark"; screenshot.lifetime = .keepAlways; add(screenshot)

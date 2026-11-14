@@ -36,6 +36,12 @@ struct LibraryView: View {
                         }.pearlCard()
                     }.buttonStyle(.plain)
                 }
+                if model.authorization == .limited {
+                    Button { model.showSettings = true } label: {
+                        Label("Showing selected photos · Manage access", systemImage: "photo.badge.checkmark")
+                            .font(.subheadline).frame(minHeight: 44)
+                    }.accessibilityIdentifier("homeLimitedAccess")
+                }
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: typeSize.isAccessibilitySize ? 1 : 2), spacing: 10) {
                     ForEach(model.homeOrder.categories) { category in
                         if category == .albums {

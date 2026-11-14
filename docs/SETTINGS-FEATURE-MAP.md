@@ -1,5 +1,9 @@
 # Pearl settings adoption map
 
+## November 14 compact refinement (before edits)
+
+All settings/actions in the table below keep their model, storage and destination. The three Privacy > On your iPhone facts become one compact informational group, without action styling. Review & removal disclosure remains. Ordinary overview/detail rows reuse NSKRow with smaller explicit list insets and semantic subheadline text; the appearance identity card retains its larger dimensions. No theme/surface choice, default, permission action, cache gate, notice or error is removed. Scanning help says “pages” rather than the obsolete “tabs.”
+
 ## Home navigation update
 
 Existing settings, permissions, appearance keys, scan controls, cache actions and review storage remain unchanged. New Settings > Your library > Home order stores stable category IDs in `pearl.home.order`. Native numbered reorder rows change Home's row-major grid immediately; restore-default affects only this key. Albums moves from its tab/shortcut to the first Home grid tile by default; creation and add-to-album remain. Smart Cleanup moves from its tab to Home's native pushed destination; app-owned scan/background/checkpoint lifetime remains unchanged. No custom back gesture or navigation-root recreation is introduced.

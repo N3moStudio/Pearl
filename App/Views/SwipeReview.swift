@@ -7,8 +7,12 @@ struct ReviewView: View {
     @Environment(\.nskPalette) private var colors
     let session: ReviewSession
     @Environment(PearlModel.self) private var model
+    @Environment(PearlAppearance.self) private var appearance
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.dynamicTypeSize) private var typeSize
     @State private var position: Int
     @State private var leaving = false
     @State private var exitOffset = CGSize.zero
@@ -40,6 +44,14 @@ struct ReviewView: View {
                         .layoutPriority(1)
                     filmstrip
                     actions(item, width: proxy.size.width)
+                    if !model.pendingItems.isEmpty {
+                        Button { queue = true } label: {
+                            Text("Review \(model.pendingItems.count) selected")
+                                .font(.subheadline).foregroundStyle(ink)
+                                .frame(minHeight: 44).contentShape(Rectangle())
+                        }.disabled(leaving)
+                            .accessibilityIdentifier("reviewQueueDuringSession")
+                    }
                 } else if position < session.items.count {
                     ContentUnavailableView("Photo no longer available", systemImage: "photo", description: Text("It may have been removed or its access changed."))
                     Button("Continue") { position += 1 }.buttonStyle(.bordered)
@@ -51,7 +63,7 @@ struct ReviewView: View {
                     Text("Your choices are saved.").foregroundStyle(.secondary)
                     Button("Review selected items") { queue = true }.buttonStyle(.borderedProminent).foregroundStyle(colors.onAccent).tint(colors.accent)
                         .disabled(model.pendingItems.isEmpty)
-                    Button("Back to months") { dismiss() }.buttonStyle(.bordered)
+                    Button("Done") { dismiss() }.buttonStyle(.bordered)
                     Spacer()
                     filmstrip
                 }
@@ -60,7 +72,10 @@ struct ReviewView: View {
         }
         .background(Color.black.ignoresSafeArea()).foregroundStyle(ink).preferredColorScheme(.dark)
         .statusBarHidden().interactiveDismissDisabled()
-        .sheet(isPresented: $queue) { NavigationStack { QueueView() } }
+        .sheet(isPresented: $queue) {
+            NavigationStack { QueueView() }.modifier(PearlAppearanceRoot())
+                .preferredColorScheme(appearance.theme.kit?.preferredColorScheme)
+        }
         .onAppear { updateReviewedCount() }
         .onChange(of: model.queue.reviewed) { _, _ in updateReviewedCount() }
         .onChange(of: position) { _, _ in zoom = 1; pan = .zero }
@@ -105,7 +120,10 @@ struct ReviewView: View {
                     Text(offset.width < 0 ? "Delete" : "Keep")
                         .font(.system(.largeTitle, design: .rounded, weight: .bold))
                         .padding(.horizontal, 24).padding(.vertical, 12)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                        .background {
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(reduceTransparency || contrast == .increased ? AnyShapeStyle(Color.black) : AnyShapeStyle(.regularMaterial))
+                        }
                         .overlay(RoundedRectangle(cornerRadius: 18).stroke(offset.width < 0 ? deleteColor : keepColor, lineWidth: 3))
                         .opacity(min(abs(offset.width) / (width * 0.25), 1)).accessibilityHidden(true)
                 }
@@ -160,6 +178,8 @@ struct ReviewView: View {
                                 }
                         }.buttonStyle(.plain).id(index)
                             .accessibilityLabel("Jump to item \(index + 1)").accessibilityIdentifier("reviewThumbnail\(index)")
+                            .accessibilityValue(model.queue.pending.contains(item.id) ? "Selected for removal review" : (model.queue.reviewed.contains(item.id) ? "Kept" : "Not reviewed"))
+                            .accessibilityAddTraits(index == position ? .isSelected : [])
                     }
                 }.padding(.horizontal, 20)
             }.scrollIndicators(.hidden).frame(height: 62)
@@ -172,12 +192,12 @@ struct ReviewView: View {
     private func actions(_ item: MediaItem, width: CGFloat) -> some View {
         HStack(spacing: 14) {
             Button { decide(item, remove: true, width: width) } label: {
-                Label("Delete", systemImage: "trash").font(.headline).frame(maxWidth: .infinity, minHeight: 56)
+                reviewActionLabel("Delete", symbol: "trash")
             }.buttonStyle(PearlReviewButton(tint: deleteColor))
                 .disabled(item.favorite || model.queue.protected.contains(item.id) || leaving || model.favoriting.contains(item.id))
                 .accessibilityIdentifier("stageRemoval").accessibilityHint("Adds to review. Nothing is deleted until you confirm.")
             Button { Task { await model.toggleFavorite(item.id) } } label: {
-                Image(systemName: item.favorite ? "heart.fill" : "heart").font(.title2)
+                Image(systemName: item.favorite ? "heart.fill" : "heart").font(.system(size: 24))
                     .contentTransition(.symbolEffect(.replace)).frame(width: 56, height: 56)
             }.buttonStyle(PearlRoundButton()).foregroundStyle(item.favorite ? deleteColor : ink)
                 .disabled(leaving || model.favoriting.contains(item.id))
@@ -189,10 +209,19 @@ struct ReviewView: View {
                     }.disabled(item.favorite)
                 }
             Button { decide(item, remove: false, width: width) } label: {
-                Label("Keep", systemImage: "checkmark").font(.headline).frame(maxWidth: .infinity, minHeight: 56)
+                reviewActionLabel("Keep", symbol: "checkmark")
             }.buttonStyle(PearlReviewButton(tint: keepColor)).disabled(leaving || model.favoriting.contains(item.id))
                 .accessibilityIdentifier("keepItem")
-        }.padding(.horizontal, 18).dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+        }.padding(.horizontal, 18)
+    }
+    private func reviewActionLabel(_ title: String, symbol: String) -> some View {
+        Group {
+            if typeSize.isAccessibilitySize {
+                Image(systemName: symbol).font(.system(size: 24)).accessibilityLabel(title)
+            } else {
+                Label(title, systemImage: symbol).font(.headline)
+            }
+        }.frame(maxWidth: .infinity, minHeight: 56)
     }
     private func decide(_ item: MediaItem, remove: Bool, width: CGFloat, origin: CGSize = .zero) {
         guard !leaving, !model.favoriting.contains(item.id), model.decide(item, remove: remove) else { return }
@@ -213,8 +242,12 @@ struct ReviewView: View {
 
 struct PearlRoundButton: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label.background(.ultraThinMaterial, in: Circle())
+        configuration.label.background {
+            Circle().fill(reduceTransparency || contrast == .increased ? AnyShapeStyle(Color(white: 0.16)) : AnyShapeStyle(.regularMaterial))
+        }
             .overlay(Circle().strokeBorder(.white.opacity(0.12)))
             .opacity(!enabled ? 0.35 : (configuration.isPressed ? 0.65 : 1))
     }

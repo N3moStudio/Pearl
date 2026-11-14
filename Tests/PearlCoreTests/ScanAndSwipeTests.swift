@@ -2,6 +2,19 @@ import Foundation
 import Testing
 @testable import PearlCore
 
+@Test func incompleteAnalysisIsNotPresentedAsFullyChecked() {
+    var progress = ScanProgress(total: 10)
+    progress.phase = .complete
+    progress.checked = 10
+    let complete = progress.completionMessage
+    progress.unavailable = 1
+    #expect(progress.completionMessage != complete)
+    progress.unavailable = 0
+    progress.verificationUnavailable = 1
+    #expect(progress.completionMessage != complete)
+    progress.verificationUnavailable = 0
+    #expect(progress.completionMessage == complete)
+}
 @Test func checkpointSurvivesRelaunchAndReconcilesEdits() throws {
     let a = MediaItem(id: "a"), b = MediaItem(id: "b"), c = MediaItem(id: "c")
     var saved = ScanCheckpoint(runtime: "r2")

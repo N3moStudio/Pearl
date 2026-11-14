@@ -39,7 +39,7 @@ run_build build/ui-tests.log xcodebuild -project Pearl.xcodeproj -scheme Pearl -
 xcrun xcresulttool export attachments --path build/UI.xcresult --output-path build/screenshots
 if [[ "${PEARL_SCAN_DIAGNOSTICS:-0}" == 1 ]]; then exit "$test_status"; fi
 [[ "$test_status" == 0 ]] || exit "$test_status"
-if [[ "${PEARL_VALIDATE_ONLY:-0}" == 1 ]]; then
+# Validate narrow-screen settings before any deliverable too.
   runtime=$(xcrun simctl list runtimes -j | python3 -c 'import sys,json; print(next(r["identifier"] for r in json.load(sys.stdin)["runtimes"] if r.get("isAvailable") and "iOS" in r["name"]))')
   narrow=$(xcrun simctl create 'Pearl Narrow' com.apple.CoreSimulator.SimDeviceType.iPhone-SE-3rd-generation "$runtime")
   xcrun simctl shutdown "$udid"
@@ -56,8 +56,8 @@ if [[ "${PEARL_VALIDATE_ONLY:-0}" == 1 ]]; then
     -only-testing:PearlUITests/PearlUITests/testLargeTextAndDarkAppearance \
     -resultBundlePath build/Narrow.xcresult test-without-building || narrow_status=$?
   xcrun xcresulttool export attachments --path build/Narrow.xcresult --output-path build/screenshots/narrow
-  exit "$narrow_status"
-fi
+  [[ "$narrow_status" == 0 ]] || exit "$narrow_status"
+if [[ "${PEARL_VALIDATE_ONLY:-0}" == 1 ]]; then exit 0; fi
 
 # Only produce a deliverable after the simulator checks succeed.
 run_build build/device.log xcodebuild -project Pearl.xcodeproj -scheme Pearl -configuration Release \
@@ -71,6 +71,6 @@ if codesign -d "$app" >/dev/null 2>&1; then codesign --remove-signature "$app"; 
 if codesign -d "$app" >/dev/null 2>&1; then echo 'Expected an unsigned app'; exit 1; fi
 mkdir -p build/package/Payload
 ditto "$app" build/package/Payload/Pearl.app
-(cd build/package && zip -qry ../Pearl-0.2.3.ipa Payload)
-python3 scripts/verify_ipa.py build/Pearl-0.2.3.ipa > build/package-verification.json
+(cd build/package && zip -qry ../Pearl-0.2.4.ipa Payload)
+python3 scripts/verify_ipa.py build/Pearl-0.2.4.ipa > build/package-verification.json
 cat build/package-verification.json

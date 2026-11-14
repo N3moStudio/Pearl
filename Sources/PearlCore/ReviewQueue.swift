@@ -26,6 +26,14 @@ public struct ReviewQueue: Codable, Sendable {
         protected.insert(id); pending.remove(id); history.removeAll { $0.id == id }
     }
     public mutating func unprotect(_ id: String) { protected.remove(id) }
+    /// A newly favorited item must not re-enter removal through an older Undo snapshot.
+    /// Preserve review progress and keep Undo useful for the rest of the session.
+    public mutating func reconcileFavorites(_ favorites: Set<String>) {
+        pending.subtract(favorites)
+        history = history.map { change in
+            Change(id: change.id, pending: change.pending && !favorites.contains(change.id), reviewed: change.reviewed)
+        }
+    }
     public mutating func unstage(_ id: String) {
         pending.remove(id); reviewed.remove(id); history.removeAll { $0.id == id }
     }

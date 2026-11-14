@@ -11,6 +11,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     var scan = ScanProgress()
     var scanning = false
     var stoppingScan = false
+    var scanFailed = false
     var backgroundStatus = ""
     var reviewSession: ReviewSession?
     let homeOrder = HomeOrder()
@@ -69,7 +70,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
             }
             scan = await scanner.restore(items)
             analysisRestored = true
-            if scan.checked > 0 { scanMessage = scan.phase == .complete ? "Scan complete. You choose what stays." : "Your place is saved. Ready to resume." }
+            if scan.checked > 0 { scanMessage = scan.phase == .complete ? scan.completionMessage : "Your place is saved. Ready to resume." }
         }
         catch { self.error = "Your saved review could not be opened. It has been left untouched. \(error.localizedDescription)" }
     }
@@ -107,7 +108,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         itemLookup = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
         let accessible = Set(items.map(\.id))
         queue.reconcile(accessible: accessible)
-        for item in items where item.favorite && queue.pending.contains(item.id) { queue.unstage(item.id) }
+        queue.reconcileFavorites(Set(items.filter(\.favorite).map(\.id)))
         scan.groups = scan.groups.compactMap { group in
             var updated = group; updated.members = group.members.filter { accessible.contains($0) && !changed.contains($0) }
             return updated.members.count > 1 ? updated : nil
@@ -148,7 +149,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         favoriting.insert(id); defer { favoriting.remove(id) }
         do {
             try await PhotoAccess.setFavorite(id, favorite: !current.favorite)
-            if !current.favorite && queue.pending.contains(id) { queue.unstage(id); persist() }
+            if !current.favorite { queue.reconcileFavorites([id]); persist() }
             await refresh()
         } catch { self.error = "Couldn't change this favorite. \(error.localizedDescription)" }
     }
@@ -178,7 +179,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     func beginScan(recheck: Bool = false) {
         guard canRead, !scanning, scanTask == nil, !clearingCache, !items.isEmpty else { return }
         let generation = UUID(); scanGeneration = generation
-        scanning = true; stoppingScan = false; scanMessage = "Checking on your iPhone…"
+        scanning = true; stoppingScan = false; scanFailed = false; scanMessage = "Checking on your iPhone…"
         if background.request(start: { [weak self] in self?.runScan(generation: generation, recheck: recheck) }, expiration: { [weak self] in
             self?.stopScan(message: "Background scan paused. Your place is saved.")
         }) {
@@ -199,13 +200,14 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
                     await self?.updateScan(progress, generation: generation)
                 }
                 guard scanGeneration == generation else { return }
-                updateScan(final, generation: generation); scanMessage = "Scan complete. You choose what stays."
+                updateScan(final, generation: generation); scanMessage = final.completionMessage
                 success = true
             } catch is CancellationError {
                 guard scanGeneration == generation else { return }
                 if !stoppingScan { scanMessage = "Scan paused. Your place is saved." }
             } catch {
                 guard scanGeneration == generation else { return }
+                scanFailed = true
                 scanMessage = error.localizedDescription
             }
             if scanGeneration == generation {
@@ -243,7 +245,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         defer { clearingCache = false }
         stopScan()
         if let scanTask { await scanTask.value }
-        do { try await scanner.clear(); scan = ScanProgress(); scanMessage = "Analysis cache cleared." }
+        do { try await scanner.clear(); scan = ScanProgress(); scanFailed = false; scanMessage = "Analysis cache cleared." }
         catch { self.error = error.localizedDescription }
     }
     func createAlbum(_ title: String) async {

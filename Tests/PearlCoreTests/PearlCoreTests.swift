@@ -57,6 +57,37 @@ import Testing
     #expect(restored.canUndo)
 }
 
+@Test func becomingFavoriteCannotRestoreRemovalThroughUndo() throws {
+    var queue = ReviewQueue()
+    let item = MediaItem(id: "a")
+    _ = queue.decide(item, remove: true)
+    _ = queue.decide(item, remove: false)
+    queue.reconcileFavorites(["a"])
+    #expect(queue.reviewed.contains("a"))
+    // Verify persisted history too, including after the favorite is later removed.
+    queue = try JSONDecoder().decode(ReviewQueue.self, from: JSONEncoder().encode(queue))
+    queue.reconcileFavorites([])
+    queue.undo()
+    #expect(queue.pending.isEmpty)
+    #expect(queue.reviewed.contains("a"))
+    queue.undo()
+    #expect(queue.pending.isEmpty)
+    #expect(queue.reviewed.isEmpty)
+}
+
+@Test func favoriteReconciliationPreservesOtherChoicesAndProtection() {
+    var queue = ReviewQueue()
+    _ = queue.decide(MediaItem(id: "a"), remove: true)
+    _ = queue.decide(MediaItem(id: "b"), remove: true)
+    queue.protect("protected")
+    queue.reconcileFavorites(["a"])
+    #expect(queue.pending == ["b"])
+    #expect(queue.reviewed == ["a", "b"])
+    #expect(queue.protected == ["protected"])
+    queue.undo()
+    #expect(queue.pending.isEmpty)
+}
+
 @Test func photoGroupsMustMatchEveryMemberNotJustAnIntermediate() {
     #expect(MatchRules.similarPhoto([0.08, 0.19]))
     #expect(!MatchRules.similarPhoto([0.08, 0.40]))

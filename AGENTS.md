@@ -2,6 +2,8 @@
 
 ## November 12 scope update
 
+November 14 follow-up: the user authorized pushing the current refinement for GitHub Actions native testing and an unsigned 0.2.4 (7) IPA, replacing only Pearl's older delivered IPA after verification. Settings density and Home navigation are implemented; compression remains unfinished. No GitHub release or billing change is requested.
+
 The user explicitly authorized making GitHub `N3moStudio/Pearl` public, adding restrictive rights-reserved terms for original Pearl code, and building through GitHub Actions. This supersedes earlier GitHub-private-only instructions below. Keep GitLab private and preserve third-party licenses. Never put credentials or personal media in either repository. The requested smaller settings, simplified navigation and compression feature are still pending; do not describe the existing 0.2.3 build as including them.
 
 ## Current phase

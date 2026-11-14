@@ -103,7 +103,7 @@ struct SettingsView: View {
                     ForEach([
                     "On iOS 26 or later, a scan can continue outside Pearl with a system Live Activity when background processing is available.",
                     "iOS may pause work. Force-quitting stops the scan; Low Power Mode or excessive heat pauses it.",
-                    "On earlier iOS versions, Pearl saves your place when you leave. Scanning continues while you switch tabs inside Pearl."
+                    "On earlier iOS versions, Pearl saves your place when you leave. Scanning continues while you browse other pages inside Pearl."
                     ], id: \.self) { Text($0).font(.footnote).foregroundStyle(colors.muted).fixedSize(horizontal: false, vertical: true) }
                 }
                 SettingsGroup("Photo & video matching") {
@@ -125,9 +125,12 @@ struct SettingsView: View {
     private var privacy: some View {
         NSKList {
             SettingsGroup("On your iPhone") {
-                SettingsRow("Local photo analysis", symbol: "iphone")
-                SettingsRow("No photo uploads", symbol: "lock.shield")
-                SettingsRow("No account or analytics", symbol: "person.crop.circle.badge.checkmark")
+                VStack(alignment: .leading, spacing: 10) {
+                    Label("Local photo analysis", systemImage: "iphone")
+                    Label("No photo uploads", systemImage: "lock.shield")
+                    Label("No account or analytics", systemImage: "person.crop.circle.badge.checkmark")
+                }.font(.subheadline).foregroundStyle(colors.text)
+                    .fixedSize(horizontal: false, vertical: true).padding(.vertical, 4)
             }
             SettingsGroup("Your choices") {
                 SettingsHelp("Review & removal", symbol: "checkmark.shield", lines: [
@@ -194,8 +197,29 @@ struct SettingsView: View {
     }
 }
 
-private typealias SettingsGroup<Content: View> = NSKSection<Content>
-private typealias SettingsRow = NSKRow
+private struct SettingsGroup<Content: View>: View {
+    let title: String?
+    let content: Content
+    init(_ title: String? = nil, @ViewBuilder content: () -> Content) {
+        self.title = title; self.content = content()
+    }
+    var body: some View {
+        NSKSection(title) { content }
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+    }
+}
+private struct SettingsRow: View {
+    let title: String
+    let symbol: String
+    let value: String?
+    init(_ title: String, symbol: String, value: String? = nil) {
+        self.title = title; self.symbol = symbol; self.value = value
+    }
+    var body: some View {
+        NSKRow(title, symbol: symbol, value: value).font(.subheadline)
+            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+    }
+}
 
 private struct SettingsIcon: View {
     @Environment(\.nskPalette) private var colors

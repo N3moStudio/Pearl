@@ -1,6 +1,6 @@
 # Pearl design specification
 
-Selected by the user on November 4, 2026. This is a direction, not a finalized app name.
+Selected by the user on November 4, 2026. Pearl is the implemented app; updated November 14 to reflect its current navigation and refinement constraints.
 
 ## Character
 
@@ -10,14 +10,17 @@ The user explicitly wants textured loading placeholders and orbs. Keep those ele
 
 ## Structure
 
-- Three main destinations: Library, Clean Up, Albums.
-- Library begins with a Continue card, media entries and year/month browsing.
+- Home is the sole root. Smart Cleanup and Albums are native pushed pages; no bottom tab bar.
+- Home has Smart Cleanup and Swipe shortcuts plus the twelve customizable media categories. Swipe opens month rows with year/sort controls.
 - Clean Up contains a short ordered list of available categories, with progressive scan results.
-- Pushed review screens focus on the photo, selection and next action.
+- Full-screen review focuses on the photo, selection and next action; its removal queue can open without ending the session.
 - Advanced filters, preferences and less frequent actions are disclosed inside sheets or menus.
 - One prominent action per task; secondary controls remain easy to discover.
 
 ## Visual rules
+
+- Ordinary settings rows use compact insets and semantic text, keeping the larger identity card and at least 44pt controls. Privacy facts form a single informational group. Saved themes/surfaces remain independent and unchanged.
+- At accessibility text sizes, review actions use labeled symbols to keep three ample touch targets without shrinking text elsewhere. Native/device verification is still required for this patch.
 
 - Use native system typography for controls and readable hierarchy, with Dynamic Type.
 - Prefer continuous rounded rectangles, consistent inset spacing and ordinary system symbols.

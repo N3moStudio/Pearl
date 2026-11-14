@@ -82,12 +82,27 @@ struct GroupList: View {
     let kind: MatchGroup.Kind
     @Environment(PearlModel.self) private var model
     private var groups: [MatchGroup] { model.scan.groups.filter { $0.kind == kind && !$0.members.allSatisfy(model.queue.reviewed.contains) } }
+    private var emptyDescription: String {
+        if model.scanning { return "Results appear as the scan progresses. You can return to Home while Pearl checks." }
+        if model.scanFailed { return "The scan couldn't finish. Return to Smart Cleanup for the error and retry when ready." }
+        if model.scan.groups.contains(where: { $0.kind == kind }) {
+            return "You've reviewed the current suggestions. Your choices are saved; nothing is removed automatically."
+        }
+        if model.scan.phase == .complete {
+            if model.scan.unavailable > 0 || model.scan.verificationUnavailable > 0 {
+                return "No suggestions in the items checked. Some media couldn't be analyzed or verified; review the scan status before trying again."
+            }
+            return "No suggestions found in this scan. Matching is conservative and can miss similar items."
+        }
+        if model.scan.checked > 0 { return "The scan hasn't finished. Return to Smart Cleanup to resume or review its status." }
+        return "Start a scan in Smart Cleanup to look for matches. Nothing is selected for removal automatically."
+    }
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 14) {
                 if groups.isEmpty {
                     ContentUnavailableView(model.scanning ? "Still looking" : "No groups to review", systemImage: "sparkles",
-                                           description: Text("Run a scan to look for matches. Results are suggestions, and some matches may be missed."))
+                                           description: Text(emptyDescription))
                 }
                 ForEach(groups) { group in
                     NavigationLink { GroupDetail(group: group) } label: {

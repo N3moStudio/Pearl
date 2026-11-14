@@ -1,5 +1,11 @@
 # Decisions and status
 
+## November 14, 2026 — local refinement
+
+Current implementation takes precedence over the historical planning baseline below. Home remains the sole root, with native pushed Smart Cleanup/Albums and all twelve ordered media categories. Compact settings retain all real settings and the larger appearance card. Full-screen review gains queue access without ending the session; Undo history cannot restore a removal after an item becomes a favorite. Scan omissions and empty results use distinct feedback. No changes to matching thresholds, background execution policy, saved preference keys or deletion confirmations. Compression remains separate and unfinished.
+
+See [feature/state map, implementation and validation limits](REFINEMENT-2026-11-14.md). This task is local-only: no source push, IPA, release or signing/billing changes.
+
 > Planning baseline retained for context. Implementation was authorized November 4, 2026. Current status and build instructions: [BUILD.md](BUILD.md). The app and local video matching are now implemented; the remote is private N3moStudio/Pearl.
 Date: November 4, 2026 (America/Los_Angeles).
 

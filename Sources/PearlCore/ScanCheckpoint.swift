@@ -95,6 +95,11 @@ public struct ScanProgress: Sendable {
     public var phase = Phase.comparing
     public var groups: [MatchGroup] = []
     public init(total: Int = 0) { self.total = total }
+    public var completionMessage: String {
+        unavailable > 0 || verificationUnavailable > 0
+            ? "Scan finished. Some items need another try."
+            : "Scan complete. You choose what stays."
+    }
     public var fraction: Double {
         guard total > 0 else { return 0 }
         if phase == .complete { return 1 }

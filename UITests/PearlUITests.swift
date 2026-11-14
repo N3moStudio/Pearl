@@ -76,7 +76,7 @@ final class PearlUITests: XCTestCase {
         capture(app, "Pearl-About-Settings")
         // LabeledContent can expose a combined label or an accessibility value.
         let version = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS '0.2.3' OR value == '0.2.3'")).firstMatch
+            .matching(NSPredicate(format: "label CONTAINS '0.2.4' OR value == '0.2.4'")).firstMatch
         XCTAssertTrue(version.waitForExistence(timeout: 5))
         app.navigationBars.buttons["BackButton"].firstMatch.tap()
         reveal(app.buttons["settingsScanning"], in: app, towardEarlierRows: true)
@@ -103,13 +103,23 @@ final class PearlUITests: XCTestCase {
         XCTAssertFalse(app.buttons["undoReview"].isEnabled)
         remove.tap()
         let review = XCTAttachment(screenshot: app.screenshot()); review.name = "Pearl-Review"; review.lifetime = .keepAlways; add(review)
+        let sessionQueue = app.buttons["reviewQueueDuringSession"]
+        XCTAssertTrue(sessionQueue.waitForExistence(timeout: 5))
+        waitEnabled(sessionQueue, true)
+        let progress = app.staticTexts["reviewProgress"].label
+        sessionQueue.tap()
+        XCTAssertTrue(app.navigationBars["Review removal"].waitForExistence(timeout: 5))
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.buttons["closeReview"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["reviewProgress"].label, progress, "Reviewing the queue must preserve session position")
         app.buttons["closeReview"].tap()
         XCTAssertTrue(app.buttons["reviewQueue"].waitForExistence(timeout: 5))
         app.buttons["reviewQueue"].tap()
         XCTAssertTrue(app.navigationBars["Review removal"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["confirmRemoval"].isEnabled)
         app.buttons["Keep"].firstMatch.tap()
-        XCTAssertFalse(app.buttons["confirmRemoval"].isEnabled)
+        XCTAssertTrue(app.staticTexts["Nothing selected"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["confirmRemoval"].exists)
         app.buttons["Done"].tap()
     }
     @MainActor func testLocalPhotoAndVideoScan() {

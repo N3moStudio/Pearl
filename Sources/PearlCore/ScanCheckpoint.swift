@@ -58,9 +58,8 @@ public struct ScanCheckpoint: Codable, Sendable {
         result.exactChecked = candidates.filter { records[$0]?.digest != nil }.count
         result.verificationUnavailable = candidates.filter { records[$0]?.verificationFailed == true }.count
         result.uncheckedIDs = Set(items.compactMap { item in
-            guard let record = records[item.id], record.isCompared, record.hash != nil,
-                  record.verificationFailed != true else { return item.id }
-            if candidates.contains(item.id) && !record.exactAttempted { return item.id }
+            guard let record = records[item.id], record.isCompared, record.hash != nil else { return item.id }
+            if candidates.contains(item.id) && (!record.exactAttempted || record.verificationFailed == true) { return item.id }
             return nil
         })
         if complete { result.phase = .complete }

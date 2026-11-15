@@ -102,6 +102,7 @@ struct ScanCoverageView: View {
                 LabeledContent("Download required", value: model.scan.downloadRequired.formatted())
                 LabeledContent("Couldn't finish analysis", value: max(0, model.scan.unavailable - model.scan.downloadRequired).formatted())
                 LabeledContent("Original verification failed", value: model.scan.verificationUnavailable.formatted())
+                LabeledContent("Original checks remaining", value: max(0, model.scan.verificationTotal - model.scan.verified).formatted())
                 if !model.scan.uncheckedIDs.isEmpty {
                     NavigationLink {
                         MediaGrid(title: "Unchecked items", items: model.items.filter { model.scan.uncheckedIDs.contains($0.id) })

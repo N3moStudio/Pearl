@@ -43,8 +43,13 @@ final class PearlUITests: XCTestCase {
         reveal(retry, in: app)
         XCTAssertTrue(retry.isEnabled, "An unscanned accessible library has unchecked items")
         retry.tap()
-        XCTAssertTrue(app.staticTexts["Scan complete. You choose what stays."].waitForExistence(timeout: 120))
+        let status = app.staticTexts["coverageStatus"]
+        reveal(status, in: app)
+        let complete = NSPredicate(format: "label == %@", "Scan complete. You choose what stays.")
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: complete, object: status)], timeout: 120), .completed)
+        reveal(retry, in: app, towardEarlierRows: true)
         XCTAssertFalse(retry.isEnabled, "A fully analyzed fixture library has nothing left to retry")
+        reveal(app.staticTexts["Accessible items"], in: app, towardEarlierRows: true)
         capture(app, "Pearl-Scan-Coverage")
         app.navigationBars.buttons["BackButton"].firstMatch.tap()
         let compareEntry = app.buttons["openDirectComparison"]

@@ -176,7 +176,7 @@ actor SimilarityScanner {
             try checkBudget()
             let candidates = saved.exactCandidates
             state.phase = .verifying; state.verificationTotal = candidates.count
-            state.uncheckedIDs.formUnion(candidates.filter { saved.records[$0]?.exactAttempted != true })
+            state.uncheckedIDs = saved.progress(for: items).uncheckedIDs
             state.verified = 0; state.exactChecked = 0; state.verificationUnavailable = 0
             saved.groups.removeAll { $0.kind == .exact }
             var digestGroups: [String: Int] = [:]

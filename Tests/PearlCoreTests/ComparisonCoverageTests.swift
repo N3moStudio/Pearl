@@ -62,4 +62,8 @@ import Testing
     #expect(progress.analyzed == 2 && progress.pending == 0)
     #expect(progress.verificationTotal == 2 && progress.verified == 0)
     #expect(progress.uncheckedIDs == ["a", "b"])
+    saved.records["a"]?.verificationFailed = true
+    saved.reconcile([items[0]], runtime: "r2", retryUnavailable: false)
+    #expect(saved.progress(for: [items[0]]).uncheckedIDs.isEmpty,
+            "A removed counterpart must not leave an impossible original verification retry")
 }

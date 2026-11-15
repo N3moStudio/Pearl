@@ -251,7 +251,7 @@ final class PearlUITests: XCTestCase {
         capture(app, "Pearl-About-Settings")
         // LabeledContent can expose a combined label or an accessibility value.
         let version = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS '0.2.5' OR value == '0.2.5'")).firstMatch
+            .matching(NSPredicate(format: "label CONTAINS '0.2.6' OR value == '0.2.6'")).firstMatch
         XCTAssertTrue(version.waitForExistence(timeout: 5))
         app.navigationBars.buttons["BackButton"].firstMatch.tap()
         reveal(app.buttons["settingsScanning"], in: app, towardEarlierRows: true)

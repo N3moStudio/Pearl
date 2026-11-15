@@ -2,6 +2,71 @@ import XCTest
 import UIKit
 
 final class PearlUITests: XCTestCase {
+    @MainActor func testUnfiledMediaAndCreateAlbumInPicker() {
+        let app = XCUIApplication(); launchReady(app)
+        app.buttons["mediaAlbums"].tap()
+        app.buttons["unfiledPhotos"].tap()
+        let filters = app.segmentedControls["unfiledMediaFilter"]
+        XCTAssertTrue(filters.waitForExistence(timeout: 5))
+        filters.buttons["Videos"].tap()
+        let tiles = app.buttons.matching(identifier: "mediaItem")
+        XCTAssertTrue(tiles.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(tiles.firstMatch.label.hasPrefix("Video"))
+        filters.buttons["Photos"].tap()
+        XCTAssertTrue(tiles.firstMatch.label.hasPrefix("Photo"))
+        filters.buttons["All"].tap()
+        capture(app, "Pearl-Unfiled-Media")
+        app.buttons["Select"].tap(); tiles.firstMatch.tap()
+        app.buttons["Add to album"].tap()
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons["Add to album"].isHittable, "Cancel preserves the selection")
+        app.buttons["Add to album"].tap()
+        app.buttons["createAlbumWithSelection"].tap()
+        let field = app.alerts.textFields["Album name"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        field.tap(); field.typeText("Pearl UI Album")
+        app.alerts.buttons["Create and add"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["albumSaved"].firstMatch.waitForExistence(timeout: 15))
+        app.navigationBars.buttons["BackButton"].firstMatch.tap()
+        app.buttons["albumOrder"].tap()
+        XCTAssertTrue(app.navigationBars["Album order"].waitForExistence(timeout: 5))
+        app.buttons.matching(identifier: "favoriteAlbum").firstMatch.tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label == %@", "Unfavorite album Pearl UI Album")).firstMatch.exists)
+        capture(app, "Pearl-Album-Order")
+    }
+    @MainActor func testDirectComparisonAndCoverageRetry() {
+        let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review", "--ui-test-clear-scan"]
+        launchReady(app)
+        app.buttons["homeSmartCleanup"].tap()
+        app.buttons["scanCoverage"].tap()
+        let retry = app.buttons["retryUnchecked"]
+        reveal(retry, in: app)
+        XCTAssertTrue(retry.isEnabled, "An unscanned accessible library has unchecked items")
+        retry.tap()
+        XCTAssertTrue(app.staticTexts["Scan complete. You choose what stays."].waitForExistence(timeout: 120))
+        XCTAssertFalse(retry.isEnabled, "A fully analyzed fixture library has nothing left to retry")
+        capture(app, "Pearl-Scan-Coverage")
+        app.navigationBars.buttons["BackButton"].firstMatch.tap()
+        let compareEntry = app.buttons["openDirectComparison"]
+        for _ in 0..<4 where !compareEntry.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        compareEntry.tap()
+        let photos = app.buttons.matching(identifier: "mediaItem")
+        XCTAssertTrue(photos.element(boundBy: 1).waitForExistence(timeout: 10))
+        let compare = app.buttons["compareSelectedPhotos"]
+        XCTAssertFalse(compare.isEnabled)
+        photos.element(boundBy: 0).tap(); photos.element(boundBy: 1).tap()
+        XCTAssertTrue(compare.isEnabled); compare.tap()
+        XCTAssertTrue(app.staticTexts["comparisonResult"].waitForExistence(timeout: 45))
+        XCTAssertFalse(app.buttons["reviewComparisonSelection"].isEnabled, "Comparison never selects a removal")
+        capture(app, "Pearl-Direct-Comparison")
+        app.buttons.matching(identifier: "compareRemoval").firstMatch.tap()
+        app.buttons["reviewComparisonSelection"].tap()
+        XCTAssertTrue(app.navigationBars["Review removal"].waitForExistence(timeout: 5))
+        app.buttons["Keep"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Nothing selected"].waitForExistence(timeout: 5))
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.navigationBars["Compare photos"].waitForExistence(timeout: 5))
+    }
     @MainActor func testHomeNavigationAndOrderSettings() {
         let app = XCUIApplication(); launchReady(app)
         XCTAssertFalse(app.tabBars.firstMatch.exists)
@@ -76,7 +141,7 @@ final class PearlUITests: XCTestCase {
         capture(app, "Pearl-About-Settings")
         // LabeledContent can expose a combined label or an accessibility value.
         let version = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS '0.2.4' OR value == '0.2.4'")).firstMatch
+            .matching(NSPredicate(format: "label CONTAINS '0.2.5' OR value == '0.2.5'")).firstMatch
         XCTAssertTrue(version.waitForExistence(timeout: 5))
         app.navigationBars.buttons["BackButton"].firstMatch.tap()
         reveal(app.buttons["settingsScanning"], in: app, towardEarlierRows: true)

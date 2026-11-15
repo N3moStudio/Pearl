@@ -43,39 +43,59 @@ enum PhotoAccess {
     }
 
     @concurrent static func image(_ id: String, size: CGFloat = 512, network: Bool = false) async -> UIImage? {
-        guard !Task.isCancelled, let asset = asset(id) else { return nil }
+        try? await analysisImage(id, size: size, network: network)
+    }
+
+    enum ReadError: Error, Sendable, Equatable { case downloadRequired, unavailable }
+
+    @concurrent static func analysisImage(_ id: String, size: CGFloat = 512, network: Bool = false) async throws -> UIImage {
+        try Task.checkCancellation()
+        guard let asset = asset(id) else { throw ReadError.unavailable }
         let manager = PHImageManager.default()
-        let stream = AsyncStream<UIImage?> { continuation in
+        let stream = AsyncThrowingStream<UIImage, Error> { continuation in
             let options = PHImageRequestOptions()
             options.deliveryMode = .highQualityFormat
             options.resizeMode = .fast
             options.isNetworkAccessAllowed = network
             let request = manager.requestImage(for: asset,
                 targetSize: CGSize(width: size, height: size), contentMode: .aspectFit, options: options) { image, info in
+                if (info?[PHImageCancelledKey] as? Bool) == true { continuation.finish(throwing: CancellationError()); return }
                 if (info?[PHImageResultIsDegradedKey] as? Bool) == true { return }
-                continuation.yield(image)
-                continuation.finish()
+                if let image { continuation.yield(image); continuation.finish() }
+                else {
+                    let needsDownload = !network && (info?[PHImageResultIsInCloudKey] as? Bool) == true
+                    continuation.finish(throwing: needsDownload ? ReadError.downloadRequired : ReadError.unavailable)
+                }
             }
             continuation.onTermination = { @Sendable _ in manager.cancelImageRequest(request) }
         }
-        for await image in stream { return Task.isCancelled ? nil : image }
-        return nil
+        for try await image in stream { try Task.checkCancellation(); return image }
+        throw CancellationError()
     }
 
     @concurrent static func video(_ id: String, network: Bool) async -> VideoSource? {
-        guard !Task.isCancelled, let asset = asset(id) else { return nil }
+        try? await analysisVideo(id, network: network)
+    }
+    @concurrent static func analysisVideo(_ id: String, network: Bool) async throws -> VideoSource {
+        try Task.checkCancellation()
+        guard let asset = asset(id) else { throw ReadError.unavailable }
         let manager = PHImageManager.default()
-        let stream = AsyncStream<VideoSource?> { continuation in
+        let stream = AsyncThrowingStream<VideoSource, Error> { continuation in
             let options = PHVideoRequestOptions()
             options.isNetworkAccessAllowed = network
             options.deliveryMode = .highQualityFormat
-            let request = manager.requestAVAsset(forVideo: asset, options: options) { asset, _, _ in
-                continuation.yield(asset.map(VideoSource.init)); continuation.finish()
+            let request = manager.requestAVAsset(forVideo: asset, options: options) { asset, _, info in
+                if (info?[PHImageCancelledKey] as? Bool) == true { continuation.finish(throwing: CancellationError()); return }
+                if let asset { continuation.yield(VideoSource(asset)); continuation.finish() }
+                else {
+                    let needsDownload = !network && (info?[PHImageResultIsInCloudKey] as? Bool) == true
+                    continuation.finish(throwing: needsDownload ? ReadError.downloadRequired : ReadError.unavailable)
+                }
             }
             continuation.onTermination = { @Sendable _ in manager.cancelImageRequest(request) }
         }
-        for await asset in stream { return Task.isCancelled ? nil : asset }
-        return nil
+        for try await asset in stream { try Task.checkCancellation(); return asset }
+        throw CancellationError()
     }
 
     @concurrent static func setFavorite(_ id: String, favorite: Bool) async throws {
@@ -148,17 +168,33 @@ struct Album: Identifiable, Sendable {
     let title: String
     let count: Int
     let cover: String?
+    let canAdd: Bool
+}
+
+struct AlbumSnapshot: Sendable {
+    let albums: [Album]
+    let organizedIDs: Set<String>
 }
 
 enum AlbumAccess {
     @concurrent static func all() async -> [Album] {
+        await snapshot().albums
+    }
+    @concurrent static func snapshot() async -> AlbumSnapshot {
         var albums: [Album] = []
+        var organizedIDs = Set<String>()
         PHAssetCollection.fetchAssetCollections(with: .album, subtype: .any, options: nil).enumerateObjects { collection, _, _ in
             let assets = PHAsset.fetchAssets(in: collection, options: nil)
+            // Smart categories are not fetched here. Shared streams do not mean
+            // an item has been filed into a personal album.
+            if collection.assetCollectionSubtype != .albumCloudShared && collection.assetCollectionSubtype != .albumMyPhotoStream {
+                assets.enumerateObjects { asset, _, _ in organizedIDs.insert(asset.localIdentifier) }
+            }
             albums.append(Album(id: collection.localIdentifier, title: collection.localizedTitle ?? "Album",
-                                count: assets.count, cover: assets.firstObject?.localIdentifier))
+                                count: assets.count, cover: assets.firstObject?.localIdentifier,
+                                canAdd: collection.canPerform(.addContent)))
         }
-        return albums.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+        return AlbumSnapshot(albums: albums.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }, organizedIDs: organizedIDs)
     }
     @concurrent static func members(_ id: String) async -> Set<String> {
         guard let album = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [id], options: nil).firstObject else { return [] }
@@ -166,8 +202,16 @@ enum AlbumAccess {
         PHAsset.fetchAssets(in: album, options: nil).enumerateObjects { asset, _, _ in ids.insert(asset.localIdentifier) }
         return ids
     }
-    @concurrent static func create(_ title: String) async throws {
-        let changes: @Sendable () -> Void = { PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: title) }
+    @concurrent static func create(_ title: String, adding ids: Set<String> = []) async throws {
+        let title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { throw AlbumError.emptyName }
+        let assets = PHAsset.fetchAssets(withLocalIdentifiers: Array(ids), options: nil)
+        guard assets.count == ids.count else { throw AlbumError.selectionChanged }
+        // One Photos transaction: a failure cannot leave an empty album behind.
+        let changes: @Sendable () -> Void = {
+            let request = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: title)
+            if !ids.isEmpty { request.addAssets(assets) }
+        }
         try await PHPhotoLibrary.shared().performChanges(changes)
     }
     @concurrent static func add(_ ids: Set<String>, to albumID: String) async throws {
@@ -179,11 +223,12 @@ enum AlbumAccess {
         try await PHPhotoLibrary.shared().performChanges(changes)
     }
     enum AlbumError: LocalizedError {
-        case unavailable, selectionChanged
+        case unavailable, selectionChanged, emptyName
         var errorDescription: String? {
             switch self {
             case .unavailable: "This album is no longer available for changes. Choose a different album."
             case .selectionChanged: "Some selected items are no longer accessible. Refresh your library and select them again."
+            case .emptyName: "Give the album a name first."
             }
         }
     }

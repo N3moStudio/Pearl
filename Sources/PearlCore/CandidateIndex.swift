@@ -13,6 +13,13 @@ public struct CandidateIndex: Sendable {
     private func keys(_ hash: UInt64, video: Bool) -> [UInt32] {
         (0..<8).map { UInt32(video ? 1 << 16 : 0) | UInt32($0 << 8) | UInt32((hash >> ($0 * 8)) & 0xff) }
     }
+    private func probeKeys(_ hash: UInt64, video: Bool) -> [UInt32] {
+        // If <=12 bits differ across eight bytes, at least one byte differs by
+        // at most one bit. Exact-byte lookup alone misses scattered changes.
+        keys(hash, video: video).flatMap { key in
+            [key] + (0..<8).map { key ^ (UInt32(1) << $0) }
+        }
+    }
     private func slot(_ item: MediaItem) -> Int {
         Int(floor(item.date.timeIntervalSinceReferenceDate / 600))
     }
@@ -33,7 +40,7 @@ public struct CandidateIndex: Sendable {
             if seen.insert(prior.item.id).inserted { ids.append(prior.item.id) }
         }
         var visual: [(id: String, distance: Int)] = []
-        for key in keys(hash, video: item.isVideo) {
+        for key in probeKeys(hash, video: item.isVideo) {
             for id in buckets[key] ?? [] where id != item.id && seen.insert(id).inserted {
                 if let entry = entries[id] {
                     let distance = MatchRules.hamming(entry.hash, hash)

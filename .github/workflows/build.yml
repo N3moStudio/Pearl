@@ -17,13 +17,15 @@ jobs:
     # Standard Apple Silicon runner; uses the owner's included private-repo
     # allowance. No larger runner or automatic paid fallback.
     runs-on: macos-26
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Toolchain
         run: xcodebuild -version
       - name: Core tests
         run: swift test
+      - name: Native Vision accuracy checks
+        run: python3 scripts/vision_native_check.py
       - name: Verify the favorite-protection test catches a broken guard
         run: |
           cp Sources/PearlCore/ReviewQueue.swift "$RUNNER_TEMP/ReviewQueue.swift"

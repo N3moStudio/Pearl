@@ -40,7 +40,17 @@ struct CleanupView: View {
                     }.buttonStyle(.borderedProminent).foregroundStyle(colors.onAccent).controlSize(.large).disabled(model.items.isEmpty || model.clearingCache || model.stoppingScan)
                         .accessibilityIdentifier("scanButton")
                     if model.scanning { Text(model.backgroundStatus).font(.footnote).foregroundStyle(.secondary) }
+                    NavigationLink { ScanCoverageView() } label: {
+                        Label("Scan coverage · \(model.scan.analyzed) analyzed", systemImage: "chart.bar.doc.horizontal")
+                            .font(.subheadline).frame(minHeight: 44)
+                    }.accessibilityIdentifier("scanCoverage")
                 }.pearlCard()
+                NavigationLink {
+                    MediaGrid(title: "Choose two photos", items: model.items.filter { !$0.isVideo }, comparisonMode: true)
+                } label: {
+                    Label("Compare two photos", systemImage: "rectangle.split.2x1")
+                        .font(.headline).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                }.accessibilityIdentifier("openDirectComparison")
                 groupRow("Exact duplicates", subtitle: "Matching original files", kind: .exact, symbol: "square.on.square")
                 groupRow("Similar photos", subtitle: "Same moment. A few versions.", kind: .photo, symbol: "photo.stack")
                 groupRow("Possible similar videos", subtitle: "Five frames compared. Review the sound too.", kind: .video, symbol: "play.rectangle.on.rectangle")
@@ -73,6 +83,52 @@ struct CleanupView: View {
         return NavigationLink { GroupList(title: title, kind: kind) } label: {
             MediaRow(title: title, subtitle: "\(matches.count) groups · \(subtitle)", symbol: symbol, previews: model.items.filter { ids.contains($0.id) })
         }.buttonStyle(.plain).accessibilityIdentifier("matches\(kind.rawValue)")
+    }
+}
+
+struct ScanCoverageView: View {
+    @Environment(PearlModel.self) private var model
+    @Environment(\.nskPalette) private var colors
+    var body: some View {
+        @Bindable var model = model
+        NSKList {
+            NSKSection("This library") {
+                LabeledContent("Accessible items", value: model.scan.total.formatted())
+                LabeledContent("Analyzed", value: model.scan.analyzed.formatted())
+                LabeledContent("Reused this pass", value: model.scan.reused.formatted())
+                LabeledContent("Not attempted yet", value: model.scan.pending.formatted())
+            }
+            NSKSection("Needs attention") {
+                LabeledContent("Download required", value: model.scan.downloadRequired.formatted())
+                LabeledContent("Couldn't finish analysis", value: max(0, model.scan.unavailable - model.scan.downloadRequired).formatted())
+                LabeledContent("Original verification failed", value: model.scan.verificationUnavailable.formatted())
+                if !model.scan.uncheckedIDs.isEmpty {
+                    NavigationLink {
+                        MediaGrid(title: "Unchecked items", items: model.items.filter { model.scan.uncheckedIDs.contains($0.id) })
+                    } label: { Text("View \(model.scan.uncheckedIDs.count) unchecked items") }
+                }
+            }
+            Section {
+                Toggle("Allow iCloud downloads", isOn: $model.allowCloud).disabled(model.scanning)
+                    .accessibilityIdentifier("coverageCloudDownloads")
+                Button(model.scanning ? "Scan in progress" : "Retry unchecked items", systemImage: "arrow.clockwise") {
+                    model.retryUnchecked()
+                }.disabled(model.scanning || model.clearingCache || model.scan.uncheckedIDs.isEmpty)
+                    .accessibilityIdentifier("retryUnchecked")
+            } footer: {
+                Text("Successful work is reused. Downloads are optional and handled by Apple; photo analysis stays on your iPhone. This permission resets off each launch.")
+            }.listRowBackground(colors.surface)
+            NSKSection {
+                Text(model.scanning ? model.scan.detail : model.scanMessage)
+                    .font(.subheadline).accessibilityIdentifier("coverageStatus")
+                Text("Analyzed means a visual comparison was attempted successfully, not that a match exists. Original-file verification is separate and only applies to eligible possible copies. Reused items are included in Analyzed.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                if model.authorization == .limited {
+                    Text("Only your selected Photos items are included. Change access in Settings to include more.")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
+            }
+        }.navigationTitle("Scan coverage").navigationBarTitleDisplayMode(.inline)
     }
 }
 

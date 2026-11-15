@@ -2,6 +2,15 @@ import Foundation
 import Testing
 @testable import PearlCore
 
+@Test func scatteredChangesInEveryByteReachTheVisualVerifier() {
+    var index = CandidateIndex()
+    index.insert(MediaItem(id: "old", date: .distantPast), hash: 0)
+    // No byte matches exactly; the original eight-band lookup missed this pair.
+    let result = index.candidates(for: MediaItem(id: "new", date: .now), hash: 0x0303010101010101)
+    #expect(result == ["old"])
+    #expect(index.candidates(for: MediaItem(id: "different", date: .now), hash: UInt64.max).isEmpty)
+}
+
 @Test func candidateIndexFindsCrossDateCopiesWithoutAllPairs() {
     var index = CandidateIndex()
     index.insert(MediaItem(id: "old", date: .distantPast), hash: 0x123456789abcdef0)

@@ -67,7 +67,7 @@ enum Fingerprints {
     }
     // Only single, unedited resource assets qualify. Live Photos, RAW pairs and edits are excluded.
     static func exactDigest(_ id: String, network: Bool) async throws -> String? {
-        guard let asset = PhotoAccess.asset(id) else { return nil }
+        guard let asset = PhotoAccess.asset(id) else { throw PhotoAccess.ReadError.unavailable }
         let resources = PHAssetResource.assetResources(for: asset)
         guard resources.count == 1, let resource = resources.first,
               resource.type == .photo || resource.type == .video else { return nil }
@@ -92,15 +92,15 @@ enum Fingerprints {
         var prints: [Data] = []
         var hash: UInt64 = 0
         if item.isVideo {
-            guard let asset = await PhotoAccess.video(item.id, network: network) else { throw ScanError.unavailable }
+            let asset = try await PhotoAccess.analysisVideo(item.id, network: network)
             for frame in try await asset.frames(duration: item.duration) {
                 try Task.checkCancellation()
                 if prints.isEmpty { hash = perceptualHash(frame) }
                 prints.append(try archive(observation(frame)))
             }
         } else {
-            guard let preview = await PhotoAccess.image(item.id, network: network),
-                  let image = uprightImage(preview) else { throw ScanError.unavailable }
+            let preview = try await PhotoAccess.analysisImage(item.id, network: network)
+            guard let image = uprightImage(preview) else { throw ScanError.unavailable }
             hash = perceptualHash(image)
             prints = [try archive(observation(image))]
         }

@@ -57,13 +57,7 @@ actor SimilarityScanner {
     func restore(_ items: [MediaItem]) -> ScanProgress {
         var saved = loadCheckpoint()
         saved.reconcile(items, runtime: Fingerprint.runtimeKey, retryUnavailable: false)
-        var state = ScanProgress(total: items.count)
-        state.checked = saved.checkedCount; state.groups = saved.groups
-        state.unavailable = saved.records.values.filter { $0.hash == nil }.count
-        state.exactChecked = saved.records.values.filter { $0.digest != nil }.count
-        state.verificationUnavailable = saved.exactCandidates.filter { saved.records[$0]?.verificationFailed == true }.count
-        if saved.complete { state.phase = .complete }
-        return state
+        return saved.progress(for: items)
     }
     func clear() throws {
         if FileManager.default.fileExists(atPath: directory.path) { try FileManager.default.removeItem(at: directory) }
@@ -95,8 +89,8 @@ actor SimilarityScanner {
         saved.reconcile(items, runtime: Fingerprint.runtimeKey, retryUnavailable: true)
         if recheck { saved.resetComparisons() }
         saved.complete = false
-        var state = ScanProgress(total: items.count)
-        state.checked = saved.checkedCount; state.reused = state.checked; state.groups = saved.groups
+        var state = saved.progress(for: items)
+        state.reused = state.analyzed
         var index = CandidateIndex()
         let itemsByID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
         var memberGroup: [String: Int] = [:]
@@ -137,7 +131,7 @@ actor SimilarityScanner {
                             let prior: [VNFeaturePrintObservation]
                             do { prior = try await observations(member, network: network) }
                             catch is CancellationError { throw CancellationError() }
-                            catch { matchesAll = false; break }
+                            catch { throw Fingerprints.ScanError.unavailable }
                             guard prior.count == current.count else { matchesAll = false; break }
                             let distances = try zip(prior, current).map { try Fingerprints.distance($0.0, $0.1) }
                             let match = item.isVideo ? MatchRules.similarVideo(item, member, distances: distances) : MatchRules.similarPhoto(distances)
@@ -159,10 +153,16 @@ actor SimilarityScanner {
                         digest: previous?.digest ?? print.exact,
                         exactAttempted: previous?.exactAttempted ?? (print.exact != nil),
                         verificationFailed: previous?.verificationFailed)
+                    if previous?.verificationFailed != true { state.uncheckedIDs.remove(item.id) }
                 } catch is CancellationError { throw CancellationError() }
                 catch {
                     try Task.checkCancellation()
-                    saved.records[item.id] = ScanRecord(item: item, hash: nil); state.unavailable += 1
+                    var record = ScanRecord(item: item, hash: nil)
+                    let needsDownload = (error as? PhotoAccess.ReadError) == .downloadRequired
+                    record.failure = needsDownload ? .downloadRequired : .unavailable
+                    saved.records[item.id] = record; state.unavailable += 1
+                    if needsDownload { state.downloadRequired += 1 }
+                    state.uncheckedIDs.insert(item.id)
                 }
                 state.checked += 1
                 if state.checked % 128 == 0 || Date().timeIntervalSince(lastSave) > 15 {
@@ -176,6 +176,8 @@ actor SimilarityScanner {
             try checkBudget()
             let candidates = saved.exactCandidates
             state.phase = .verifying; state.verificationTotal = candidates.count
+            state.uncheckedIDs.formUnion(candidates.filter { saved.records[$0]?.exactAttempted != true })
+            state.verified = 0; state.exactChecked = 0; state.verificationUnavailable = 0
             saved.groups.removeAll { $0.kind == .exact }
             var digestGroups: [String: Int] = [:]
             var first: [String: String] = [:]
@@ -200,7 +202,9 @@ actor SimilarityScanner {
                         saved.groups.append(MatchGroup(kind: .exact, members: [prior, item.id]))
                     } else { first[digest] = item.id }
                 }
-                if !record.exactAttempted { state.verificationUnavailable += 1 }
+                if !record.exactAttempted {
+                    state.verificationUnavailable += 1; state.uncheckedIDs.insert(item.id)
+                } else { state.uncheckedIDs.remove(item.id) }
                 state.verified += 1
                 if state.verified % 128 == 0 || Date().timeIntervalSince(lastSave) > 15 {
                     try save(saved); lastSave = Date()

@@ -7,6 +7,11 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     var authorization = PHPhotoLibrary.authorizationStatus(for: .readWrite)
     var items: [MediaItem] = []
     var albums: [Album] = []
+    var organizedIDs: Set<String> = []
+    var albumRevision = 0
+    let albumPreferences = AlbumPreferences()
+    var orderedAlbums: [Album] { albumPreferences.sorted(albums) }
+    var unfiledItems: [MediaItem] { items.filter { !organizedIDs.contains($0.id) } }
     var queue = ReviewQueue()
     var scan = ScanProgress()
     var scanning = false
@@ -87,7 +92,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
             }
             loadGeneration += 1
             loading = false
-            stopScan(); categoryIDs = [:]; items = []; itemLookup = [:]; albums = []; scan.groups = []; return
+            stopScan(); categoryIDs = [:]; items = []; itemLookup = [:]; albums = []; organizedIDs = []; scan.groups = []; return
         }
         // Register only after the person has chosen photo access on the welcome screen.
         if !observingPhotos {
@@ -98,13 +103,14 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         let generation = loadGeneration
         loading = true
         async let fetched = PhotoAccess.library()
-        async let collections = AlbumAccess.all()
+        async let collections = AlbumAccess.snapshot()
         async let categories = PhotoAccess.categoryMembership()
         let (newItems, newAlbums, newCategories) = await (fetched, collections, categories)
         guard generation == loadGeneration else { return }
         let previousVersions = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0.modified) })
         let changed = Set(newItems.filter { previousVersions[$0.id] != nil && previousVersions[$0.id] != $0.modified }.map(\.id))
-        items = newItems; albums = newAlbums; categoryIDs = newCategories; loading = false
+        items = newItems; albums = newAlbums.albums; organizedIDs = newAlbums.organizedIDs
+        albumRevision += 1; categoryIDs = newCategories; loading = false
         itemLookup = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
         let accessible = Set(items.map(\.id))
         queue.reconcile(accessible: accessible)
@@ -114,6 +120,15 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
             return updated.members.count > 1 ? updated : nil
         }
         persist()
+        if analysisRestored && !scanning && !clearingCache {
+            let currentScan = await scanner.restore(items)
+            guard generation == loadGeneration, !scanning, !clearingCache else { return }
+            let reused = scan.reused
+            scan = currentScan; scan.reused = min(reused, scan.analyzed)
+            if scan.pending > 0 && scanMessage.hasPrefix("Scan complete") {
+                scanMessage = "Your library changed. New or edited items are ready to check."
+            }
+        }
     }
     private func persist() {
         guard ready else { return }
@@ -185,9 +200,15 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
         }) {
             backgroundStatus = "You can leave Pearl. Track progress in the Live Activity."
         } else {
-            backgroundStatus = "Background scanning isn't available right now. Other Pearl tabs work; leaving the app saves your place."
+            backgroundStatus = "Background scanning isn't available right now. Other Pearl pages work; leaving the app saves your place."
             runScan(generation: generation, recheck: recheck)
         }
+    }
+    func retryUnchecked() {
+        guard !scan.uncheckedIDs.isEmpty else { return }
+        // The normal incremental pass keeps successful comparisons and digests.
+        // Unlike Recheck all matches, this does not invalidate successful work.
+        beginScan()
     }
     private func runScan(generation: UUID, recheck: Bool) {
         guard scanning, scanGeneration == generation else { background.finish(success: false); return }
@@ -213,6 +234,7 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
             if scanGeneration == generation {
                 background.finish(success: success)
                 scanning = false; stoppingScan = false; scanTask = nil
+                if input != items { await refresh() }
             }
         }
     }
@@ -251,12 +273,16 @@ final class PearlModel: NSObject, PHPhotoLibraryChangeObserver {
     func createAlbum(_ title: String) async {
         let title = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return }
-        do { try await AlbumAccess.create(title); albums = await AlbumAccess.all() }
+        do { try await AlbumAccess.create(title); await refresh() }
         catch { self.error = error.localizedDescription }
     }
-    func addToAlbum(_ ids: Set<String>, album: Album) async {
-        do { try await AlbumAccess.add(ids, to: album.id); notice = "Added to \(album.title). Items also remain in your library."; albums = await AlbumAccess.all() }
-        catch { self.error = error.localizedDescription }
+    func addToAlbum(_ ids: Set<String>, album: Album) async throws {
+        try await AlbumAccess.add(ids, to: album.id)
+        await refresh()
+    }
+    func createAlbum(_ title: String, adding ids: Set<String>) async throws {
+        try await AlbumAccess.create(title, adding: ids)
+        await refresh()
     }
 }
 

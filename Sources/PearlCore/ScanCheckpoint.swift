@@ -1,5 +1,9 @@
 import Foundation
 
+public enum ScanFailure: String, Codable, Sendable {
+    case downloadRequired, unavailable
+}
+
 /// Durable, small scan metadata. Image data and Vision observations stay in the cache.
 public struct ScanRecord: Codable, Sendable {
     public var item: MediaItem
@@ -7,6 +11,7 @@ public struct ScanRecord: Codable, Sendable {
     public var digest: String?
     public var exactAttempted: Bool
     public var verificationFailed: Bool?
+    public var failure: ScanFailure?
     // Missing in older checkpoints: keep reusable fingerprints/digests but redo matching.
     public var comparisonRevision: Int?
     public var isCompared: Bool { comparisonRevision == ScanCheckpoint.matchingRevision }
@@ -31,7 +36,7 @@ public struct ScanRecord: Codable, Sendable {
 }
 
 public struct ScanCheckpoint: Codable, Sendable {
-    public static let matchingRevision = 2
+    public static let matchingRevision = 3
     public var schema = 1
     public var runtime: String
     public var records: [String: ScanRecord] = [:]
@@ -39,6 +44,28 @@ public struct ScanCheckpoint: Codable, Sendable {
     public var complete = false
     public init(runtime: String) { self.runtime = runtime }
     public var checkedCount: Int { records.values.lazy.filter(\.isCompared).count }
+
+    public func progress(for items: [MediaItem]) -> ScanProgress {
+        var result = ScanProgress(total: items.count)
+        let compared = records.values.filter(\.isCompared)
+        result.checked = compared.count
+        result.unavailable = compared.filter { $0.hash == nil }.count
+        result.downloadRequired = compared.filter { $0.hash == nil && $0.failure == .downloadRequired }.count
+        result.groups = groups
+        let candidates = exactCandidates
+        result.verificationTotal = candidates.count
+        result.verified = candidates.filter { records[$0]?.exactAttempted == true || records[$0]?.verificationFailed == true }.count
+        result.exactChecked = candidates.filter { records[$0]?.digest != nil }.count
+        result.verificationUnavailable = candidates.filter { records[$0]?.verificationFailed == true }.count
+        result.uncheckedIDs = Set(items.compactMap { item in
+            guard let record = records[item.id], record.isCompared, record.hash != nil,
+                  record.verificationFailed != true else { return item.id }
+            if candidates.contains(item.id) && !record.exactAttempted { return item.id }
+            return nil
+        })
+        if complete { result.phase = .complete }
+        return result
+    }
 
     public mutating func resetComparisons() {
         records = records.mapValues { record in
@@ -87,6 +114,10 @@ public struct ScanProgress: Sendable {
     public var checked = 0
     public var total = 0
     public var unavailable = 0
+    public var downloadRequired = 0
+    public var uncheckedIDs: Set<String> = []
+    public var analyzed: Int { max(0, checked - unavailable) }
+    public var pending: Int { max(0, total - checked) }
     public var exactChecked = 0
     public var verificationUnavailable = 0
     public var verified = 0

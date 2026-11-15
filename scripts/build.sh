@@ -32,23 +32,10 @@ xcrun simctl privacy "$udid" grant photos com.n3mostudio.pearl
 test_status=0
 test_selection=(-parallel-testing-enabled NO)
 if [[ "${PEARL_SCAN_DIAGNOSTICS:-0}" == 1 ]]; then test_selection+=(-only-testing:PearlScanTests); fi
-# Xcode can reinstall the test host after our initial Photos grant. Keep this
-# synthetic simulator permission available during unit-test startup only.
-(
-  for attempt in {1..60}; do
-    xcrun simctl privacy "$udid" grant photos com.n3mostudio.pearl >/dev/null 2>&1 || true
-    sleep 2
-  done
-) &
-photos_permission_pid=$!
-trap 'kill "$photos_permission_pid" 2>/dev/null || true' EXIT
 run_build build/ui-tests.log xcodebuild -project Pearl.xcodeproj -scheme Pearl -configuration Debug \
   -destination "platform=iOS Simulator,id=$udid" -derivedDataPath build/Simulator \
   -maximum-concurrent-test-simulator-destinations 1 \
   -resultBundlePath build/UI.xcresult "${test_selection[@]}" test-without-building || test_status=$?
-kill "$photos_permission_pid" 2>/dev/null || true
-wait "$photos_permission_pid" 2>/dev/null || true
-trap - EXIT
 xcrun xcresulttool export attachments --path build/UI.xcresult --output-path build/screenshots
 if [[ "${PEARL_SCAN_DIAGNOSTICS:-0}" == 1 ]]; then exit "$test_status"; fi
 [[ "$test_status" == 0 ]] || exit "$test_status"

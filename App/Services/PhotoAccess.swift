@@ -41,6 +41,12 @@ enum PhotoAccess {
     static func asset(_ id: String) -> PHAsset? {
         PHAsset.fetchAssets(withLocalIdentifiers: [id], options: nil).firstObject
     }
+    #if DEBUG
+    static func fixtureName(_ id: String) -> String? {
+        guard let item = asset(id) else { return nil }
+        return PHAssetResource.assetResources(for: item).first?.originalFilename
+    }
+    #endif
 
     @concurrent static func image(_ id: String, size: CGFloat = 512, network: Bool = false) async -> UIImage? {
         try? await analysisImage(id, size: size, network: network)

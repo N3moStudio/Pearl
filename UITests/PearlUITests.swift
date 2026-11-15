@@ -15,6 +15,7 @@ final class PearlUITests: XCTestCase {
         filters.buttons["Photos"].tap()
         XCTAssertTrue(tiles.firstMatch.label.hasPrefix("Photo"))
         filters.buttons["All"].tap()
+        let originalCount = tiles.count
         capture(app, "Pearl-Unfiled-Media")
         app.buttons["Select"].tap(); tiles.firstMatch.tap()
         app.buttons["Add to album"].tap()
@@ -27,6 +28,20 @@ final class PearlUITests: XCTestCase {
         field.tap(); field.typeText("Pearl UI Album")
         app.alerts.buttons["Create and add"].tap()
         XCTAssertTrue(app.descendants(matching: .any)["albumSaved"].firstMatch.waitForExistence(timeout: 15))
+        XCTAssertEqual(tiles.count, originalCount - 1, "Filing removes the item from the unfiled view")
+        app.buttons["Select"].tap(); tiles.firstMatch.tap()
+        app.buttons["Add to album"].tap()
+        app.buttons["Pearl UI Album"].tap()
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.navigationBars["Add to album"])], timeout: 15), .completed)
+        XCTAssertTrue(app.navigationBars["Not in an album"].waitForExistence(timeout: 15))
+        XCTAssertEqual(tiles.count, originalCount - 2, "Adding to an existing album refreshes membership too")
+        app.navigationBars.buttons["BackButton"].firstMatch.tap()
+        let savedAlbum = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Pearl UI Album")).firstMatch
+        for _ in 0..<4 where !savedAlbum.isHittable { app.scrollViews.firstMatch.swipeUp() }
+        savedAlbum.tap()
+        XCTAssertTrue(app.navigationBars["Pearl UI Album"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons.matching(identifier: "mediaItem").element(boundBy: 1).waitForExistence(timeout: 10))
+        XCTAssertEqual(app.buttons.matching(identifier: "mediaItem").count, 2, "Real Photos album contains both filed items")
         app.navigationBars.buttons["BackButton"].firstMatch.tap()
         app.buttons["albumOrder"].tap()
         XCTAssertTrue(app.navigationBars["Album order"].waitForExistence(timeout: 5))
@@ -58,7 +73,7 @@ final class PearlUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Not in an album"].waitForExistence(timeout: 5))
     }
     @MainActor func testDirectComparisonAndCoverageRetry() {
-        let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review", "--ui-test-clear-scan"]
+        let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review", "--ui-test-clear-scan", "--ui-test-fixture-labels"]
         launchReady(app)
         app.buttons["homeSmartCleanup"].tap()
         app.buttons["scanCoverage"].tap()
@@ -84,9 +99,13 @@ final class PearlUITests: XCTestCase {
         XCTAssertTrue(photos.element(boundBy: 1).waitForExistence(timeout: 10))
         let compare = app.buttons["compareSelectedPhotos"]
         XCTAssertFalse(compare.isEnabled)
-        photos.element(boundBy: 0).tap(); photos.element(boundBy: 1).tap()
+        let original = photos.matching(NSPredicate(format: "label CONTAINS[c] %@", "scene-0-a.jpg")).firstMatch
+        let copy = photos.matching(NSPredicate(format: "label CONTAINS[c] %@", "exact-copy.jpg")).firstMatch
+        XCTAssertTrue(original.waitForExistence(timeout: 5) && copy.exists, "Both exact-copy fixtures must be installed")
+        original.tap(); copy.tap()
         XCTAssertTrue(compare.isEnabled); compare.tap()
         XCTAssertTrue(app.staticTexts["comparisonResult"].waitForExistence(timeout: 45))
+        XCTAssertEqual(app.staticTexts["comparisonResult"].label, "Exact copies", "Direct comparison must verify the actual original fixture bytes")
         XCTAssertFalse(app.buttons["reviewComparisonSelection"].isEnabled, "Comparison never selects a removal")
         capture(app, "Pearl-Direct-Comparison")
         app.buttons.matching(identifier: "compareRemoval").firstMatch.tap()

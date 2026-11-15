@@ -71,7 +71,7 @@ struct MediaGrid: View {
                                 }.font(.caption).padding(7).foregroundStyle(.white).shadow(radius: 2)
                             }.clipShape(RoundedRectangle(cornerRadius: 13))
                     }.buttonStyle(.plain).accessibilityIdentifier("mediaItem")
-                        .accessibilityLabel("\(item.isVideo ? "Video" : "Photo"), \(item.date.formatted(date: .abbreviated, time: .omitted))\(selected.contains(item.id) ? ", selected" : "")")
+                        .accessibilityLabel(mediaLabel(item))
                 }
             }.padding(12)
         }.background(colors.canvas).navigationTitle(title).navigationBarTitleDisplayMode(.inline)
@@ -123,5 +123,14 @@ struct MediaGrid: View {
         .onChange(of: model.items) { _, current in selected.formIntersection(Set(current.map(\.id))) }
         .onChange(of: items) { _, current in selected.formIntersection(Set(current.map(\.id))) }
         .onChange(of: mediaType) { _, _ in selected = [] }
+    }
+    private func mediaLabel(_ item: MediaItem) -> String {
+        var label = "\(item.isVideo ? "Video" : "Photo"), \(item.date.formatted(date: .abbreviated, time: .omitted))\(selected.contains(item.id) ? ", selected" : "")"
+        #if DEBUG
+        // Only the synthetic UI suite opts into fixture names; absent in IPA builds.
+        if ProcessInfo.processInfo.arguments.contains("--ui-test-fixture-labels"),
+           let name = PhotoAccess.fixtureName(item.id) { label += ", \(name)" }
+        #endif
+        return label
     }
 }

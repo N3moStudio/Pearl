@@ -30,9 +30,32 @@ final class PearlUITests: XCTestCase {
         app.navigationBars.buttons["BackButton"].firstMatch.tap()
         app.buttons["albumOrder"].tap()
         XCTAssertTrue(app.navigationBars["Album order"].waitForExistence(timeout: 5))
-        app.buttons.matching(identifier: "favoriteAlbum").firstMatch.tap()
+        app.buttons.matching(NSPredicate(format: "label == %@", "Favorite album Pearl UI Album")).firstMatch.tap()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label == %@", "Unfavorite album Pearl UI Album")).firstMatch.exists)
         capture(app, "Pearl-Album-Order")
+    }
+    @MainActor func testSwipeFilesCurrentPhotoAndKeepsSession() {
+        let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review"]; launchReady(app)
+        app.buttons["mediaAlbums"].tap(); app.buttons["unfiledPhotos"].tap()
+        app.segmentedControls["unfiledMediaFilter"].buttons["Photos"].tap()
+        app.buttons["swipeUnfiledItems"].tap()
+        XCTAssertTrue(app.buttons["reviewAddToAlbum"].waitForExistence(timeout: 5))
+        let originalProgress = app.staticTexts["reviewProgress"].label
+        app.buttons["reviewAddToAlbum"].tap()
+        app.buttons["Cancel"].tap()
+        XCTAssertEqual(app.staticTexts["reviewProgress"].label, originalProgress)
+        app.buttons["reviewAddToAlbum"].tap()
+        app.buttons["createAlbumWithSelection"].tap()
+        let field = app.alerts.textFields["Album name"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5)); field.tap(); field.typeText("Pearl Swipe Album")
+        app.alerts.buttons["Create and add"].tap()
+        let next = NSPredicate(format: "label BEGINSWITH %@", "2 of")
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: next, object: app.staticTexts["reviewProgress"])], timeout: 20), .completed)
+        XCTAssertEqual(app.buttons["reviewThumbnail0"].value as? String, "Kept")
+        XCTAssertTrue(app.buttons["stageRemoval"].exists && app.buttons["favoriteItem"].exists && app.buttons["keepItem"].exists)
+        capture(app, "Pearl-Swipe-Album-Action")
+        app.buttons["closeReview"].tap()
+        XCTAssertTrue(app.navigationBars["Not in an album"].waitForExistence(timeout: 5))
     }
     @MainActor func testDirectComparisonAndCoverageRetry() {
         let app = XCUIApplication(); app.launchArguments = ["--ui-test-reset-review", "--ui-test-clear-scan"]

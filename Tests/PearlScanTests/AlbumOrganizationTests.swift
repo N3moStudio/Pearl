@@ -26,7 +26,7 @@ final class AlbumOrganizationTests: XCTestCase {
     @MainActor func testCreateAndAddUpdatesActualPhotoLibraryMembership() async throws {
         let items = await PhotoAccess.library()
         XCTAssertGreaterThanOrEqual(items.count, 2)
-        let first = try XCTUnwrap(items.first?.id), second = items[1].id
+        let first = try XCTUnwrap(items.first?.id), second = try XCTUnwrap(items.dropFirst().first?.id)
         let title = "Pearl CI \(UUID().uuidString)"
         try await AlbumAccess.create(title, adding: [first])
         let created = await AlbumAccess.all()

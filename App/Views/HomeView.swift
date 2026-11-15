@@ -164,6 +164,10 @@ struct SwipeLibraryView: View {
                         category("Favorites", items: model.items.filter(\.favorite))
                         category("Screenshots", items: model.items.filter(\.isScreenshot))
                         category("Videos", items: model.items.filter(\.isVideo))
+                        NavigationLink { UnfiledPhotosView() } label: {
+                            PhotoTile(title: "Not in an album", subtitle: model.authorization == .limited ? "Check access" : "\(model.unfiledItems.count)",
+                                      symbol: "tray", cover: model.unfiledItems.first, height: 145).frame(width: 150)
+                        }.buttonStyle(.plain).accessibilityIdentifier("swipeUnfiledCategory")
                     }.padding(.horizontal, 20)
                 }.scrollIndicators(.hidden)
                 LazyVStack(spacing: 10) {

@@ -72,6 +72,7 @@ struct UnfiledPhotosView: View {
 
 struct AlbumPicker: View {
     let ids: Set<String>
+    var keepsReviewedItem = false
     var onAdded: () -> Void = {}
     @Environment(PearlModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -82,7 +83,7 @@ struct AlbumPicker: View {
     var body: some View {
         NavigationStack {
             List {
-                Text("Add \(ids.count) items. They'll still appear in your main library.").foregroundStyle(.secondary)
+                Text(keepsReviewedItem ? "Add this item, keep it, and continue swiping. Your original stays in Photos." : "Add \(ids.count) items. They'll still appear in your main library.").foregroundStyle(.secondary)
                 Button("New album", systemImage: "plus") { creating = true }.disabled(adding)
                     .accessibilityIdentifier("createAlbumWithSelection")
                 ForEach(model.orderedAlbums.filter(\.canAdd)) { album in

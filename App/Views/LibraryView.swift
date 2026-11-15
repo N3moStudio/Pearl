@@ -43,6 +43,12 @@ struct MediaGrid: View {
                 }.pickerStyle(.segmented).padding(.horizontal).padding(.top, 8).accessibilityIdentifier("unfiledMediaFilter")
             }
             if let helper { Text(helper).font(.footnote).foregroundStyle(.secondary).padding(.horizontal).padding(.top, 8) }
+            if showsMediaTabs {
+                Button("Swipe through \(visible.count) items", systemImage: "hand.draw") {
+                    model.openReview(visible, title: mediaType == "All media" ? title : "Unfiled \(mediaType.lowercased())", startID: visible.first?.id)
+                }.buttonStyle(.borderedProminent).foregroundStyle(colors.onAccent)
+                    .disabled(visible.isEmpty).padding(.top, 8).accessibilityIdentifier("swipeUnfiledItems")
+            }
             if albumSaved { Label("Added to your album", systemImage: "checkmark.circle").font(.subheadline).padding(.top, 8).accessibilityIdentifier("albumSaved") }
             if visible.isEmpty {
                 ContentUnavailableView("All clear here", systemImage: "leaf", description: Text("No items match this view."))

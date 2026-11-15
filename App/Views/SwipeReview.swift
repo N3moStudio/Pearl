@@ -17,6 +17,7 @@ struct ReviewView: View {
     @State private var leaving = false
     @State private var exitOffset = CGSize.zero
     @State private var queue = false
+    @State private var albumItem: MediaItem?
     @State private var zoom: CGFloat = 1
     @State private var pan = CGSize.zero
     @State private var reviewedCount = 0
@@ -76,6 +77,13 @@ struct ReviewView: View {
             NavigationStack { QueueView() }.modifier(PearlAppearanceRoot())
                 .preferredColorScheme(appearance.theme.kit?.preferredColorScheme)
         }
+        .sheet(item: $albumItem) { item in
+            AlbumPicker(ids: [item.id], keepsReviewedItem: true) {
+                guard let latest = model.item(item.id), model.decide(latest, remove: false) else { return }
+                if current?.id == item.id { position += 1 }
+            }.modifier(PearlAppearanceRoot())
+                .preferredColorScheme(appearance.theme.kit?.preferredColorScheme)
+        }
         .onAppear { updateReviewedCount() }
         .onChange(of: model.queue.reviewed) { _, _ in updateReviewedCount() }
         .onChange(of: position) { _, _ in zoom = 1; pan = .zero }
@@ -96,6 +104,10 @@ struct ReviewView: View {
                     .font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
                     .accessibilityIdentifier("reviewProgress")
             }.frame(maxWidth: .infinity)
+            Button { albumItem = current } label: {
+                Image(systemName: "rectangle.stack.badge.plus").font(.title3).frame(width: 44, height: 48)
+            }.buttonStyle(PearlRoundButton()).disabled(current == nil || leaving || model.deleting)
+                .accessibilityLabel("Add to album and keep").accessibilityIdentifier("reviewAddToAlbum")
             Button {
                 if let id = model.undo(), let index = session.positions[id] { position = index }
             } label: { Image(systemName: "arrow.uturn.backward").font(.title3).frame(width: 48, height: 48) }

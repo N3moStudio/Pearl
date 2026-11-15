@@ -12,6 +12,10 @@
 
 No storage keys, defaults, photo-favorite behavior, Photos album order, media, review decisions or active scan ownership change. Native navigation and accessibility text sizing remain. This follow-up validates source/native UI; it does not request another IPA or release.
 
+Validation: [GitHub Actions 43752424595](https://github.com/N3moStudio/Pearl/actions/runs/43752424595) passed for implementation `2025304fe4b06720afee3b2e6c5aa46ddae21f12`. Passed 28 core tests, native Mac Vision fixture checks, both safety mutations, 11 iOS unit tests, 15 main iPhone UI tests and two additional narrow iPhone SE executions. The new native test drags a real album using its reorder handle, toggles favorite status, checks the returned picker order, preserves photo selection on Cancel, and verifies order after relaunch. Existing create/add/keep flows passed too.
+
+Inspected actual screenshots for Privacy's padded facts, compact Albums, the destination picker, album ordering, and maximum accessibility text on the narrow phone. Text wraps without clipping; privacy facts are inset inside their surface. Evidence is under ignored `.build/github-43752424595/` (artifact `14177912978`). Four edited Swift files also passed portable syntax checks; native compilation is the stronger evidence. The only compile warning was skipped metadata extraction for absent App Intents support. No IPA was produced or replaced. Real-device gestures, VoiceOver and large personal album libraries remain unverified. Later documentation commits do not change the tested implementation.
+
 ## November 14 compact refinement (before edits)
 
 All settings/actions in the table below keep their model, storage and destination. The three Privacy > On your iPhone facts become one compact informational group, without action styling. Review & removal disclosure remains. Ordinary overview/detail rows reuse NSKRow with smaller explicit list insets and semantic subheadline text; the appearance identity card retains its larger dimensions. No theme/surface choice, default, permission action, cache gate, notice or error is removed. Scanning help says “pages” rather than the obsolete “tabs.”

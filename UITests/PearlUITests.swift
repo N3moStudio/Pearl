@@ -72,7 +72,9 @@ final class PearlUITests: XCTestCase {
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: complete, object: status)], timeout: 120), .completed)
         reveal(retry, in: app, towardEarlierRows: true)
         XCTAssertFalse(retry.isEnabled, "A fully analyzed fixture library has nothing left to retry")
-        reveal(app.staticTexts["Accessible items"], in: app, towardEarlierRows: true)
+        let accessible = app.descendants(matching: .any)["coverageAccessible"].firstMatch
+        reveal(accessible, in: app, towardEarlierRows: true)
+        XCTAssertGreaterThan(Int(accessible.value as? String ?? "0") ?? 0, 0)
         capture(app, "Pearl-Scan-Coverage")
         app.navigationBars.buttons["BackButton"].firstMatch.tap()
         let compareEntry = app.buttons["openDirectComparison"]

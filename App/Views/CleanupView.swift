@@ -94,6 +94,9 @@ struct ScanCoverageView: View {
         NSKList {
             NSKSection("This library") {
                 LabeledContent("Accessible items", value: model.scan.total.formatted())
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Accessible items").accessibilityValue(model.scan.total.formatted())
+                    .accessibilityIdentifier("coverageAccessible")
                 LabeledContent("Analyzed", value: model.scan.analyzed.formatted())
                 LabeledContent("Reused this pass", value: model.scan.reused.formatted())
                 LabeledContent("Not attempted yet", value: model.scan.pending.formatted())

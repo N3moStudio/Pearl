@@ -5,7 +5,7 @@ import PearlCore
 
 final class DirectComparisonTests: XCTestCase {
     @MainActor func testDirectComparisonVerifiesOriginalFixtureCopies() async throws {
-        let library = await PhotoAccess.library()
+        let library = try await SyntheticPhotoLibrary.ready()
         let pair = library.filter { item in
             guard let asset = PhotoAccess.asset(item.id) else { return false }
             let name = PHAssetResource.assetResources(for: asset).first?.originalFilename

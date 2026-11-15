@@ -2,6 +2,52 @@ import XCTest
 import UIKit
 
 final class PearlUITests: XCTestCase {
+    @MainActor func testAlbumPickerOrganizePreservesSelectionAndOrder() {
+        let app = XCUIApplication(); launchReady(app)
+        let first = "Pearl Order A", second = "Pearl Order B"
+        app.buttons["mediaAlbums"].tap()
+        for name in [first, second] {
+            app.buttons["New album"].tap()
+            let field = app.alerts.textFields["Album name"]
+            XCTAssertTrue(field.waitForExistence(timeout: 5))
+            field.tap(); field.typeText(name); app.alerts.buttons["Create"].tap()
+            XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", name)).firstMatch.waitForExistence(timeout: 15))
+        }
+        capture(app, "Pearl-Compact-Albums")
+        app.navigationBars.buttons["BackButton"].firstMatch.tap()
+        app.buttons["mediaPhotos"].tap()
+        app.buttons["Select"].tap()
+        app.buttons.matching(identifier: "mediaItem").firstMatch.tap()
+        app.buttons["Add to album"].tap()
+        app.buttons["organizePickerAlbums"].tap()
+        XCTAssertTrue(app.navigationBars["Album order"].waitForExistence(timeout: 5))
+        let a = app.staticTexts[first], b = app.staticTexts[second]
+        XCTAssertTrue(a.exists && b.exists)
+        // Drag the native trailing handle, not the favorite button or label.
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        let handle = origin.withOffset(CGVector(dx: app.frame.width - 42, dy: b.frame.midY))
+        handle.press(forDuration: 0.8, thenDragTo: origin.withOffset(CGVector(dx: app.frame.width - 42, dy: a.frame.midY - 12)))
+        let reordered = NSPredicate { _, _ in b.frame.minY < a.frame.minY }
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: reordered, object: app)], timeout: 5), .completed)
+        app.buttons["Favorite album \(first)"].tap()
+        XCTAssertTrue(app.buttons["Unfavorite album \(first)"].waitForExistence(timeout: 5))
+        app.buttons["Unfavorite album \(first)"].tap()
+        capture(app, "Pearl-Picker-Album-Order")
+        app.navigationBars.buttons["BackButton"].firstMatch.tap()
+        XCTAssertTrue(app.navigationBars["Add to album"].waitForExistence(timeout: 5))
+        XCTAssertLessThan(app.buttons[second].frame.minY, app.buttons[first].frame.minY)
+        capture(app, "Pearl-Compact-Album-Picker")
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons["Add to album"].isHittable, "Organizing then cancelling must preserve the selected photo")
+        app.terminate(); launchReady(app)
+        app.buttons["mediaPhotos"].tap(); app.buttons["Select"].tap()
+        app.buttons.matching(identifier: "mediaItem").firstMatch.tap()
+        app.buttons["Add to album"].tap()
+        XCTAssertTrue(app.buttons[second].waitForExistence(timeout: 5))
+        XCTAssertLessThan(app.buttons[second].frame.minY, app.buttons[first].frame.minY, "Picker order must survive relaunch")
+        app.buttons["Cancel"].tap()
+    }
+
     @MainActor func testUnfiledMediaAndCreateAlbumInPicker() {
         let app = XCUIApplication(); launchReady(app)
         app.buttons["mediaAlbums"].tap()
@@ -157,6 +203,13 @@ final class PearlUITests: XCTestCase {
         scanning.tap()
         XCTAssertTrue(app.switches["scanCloudDownloads"].waitForExistence(timeout: 5))
         capture(app, "Pearl-Scanning-Large-Text-Dark")
+        app.navigationBars.buttons["BackButton"].firstMatch.tap()
+        reveal(app.buttons["settingsPrivacy"], in: app)
+        app.buttons["settingsPrivacy"].tap()
+        XCTAssertTrue(app.staticTexts["Local photo analysis"].waitForExistence(timeout: 5))
+        capture(app, "Pearl-Privacy-Large-Text-Dark")
+        reveal(app.staticTexts["No account or analytics"], in: app)
+        XCTAssertTrue(app.staticTexts["No account or analytics"].isHittable)
     }
 
     @MainActor func testSettingsNavigationAndCloudPreference() {
@@ -180,6 +233,14 @@ final class PearlUITests: XCTestCase {
         cloud.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
         let enabledCloud = NSPredicate(format: "value == '1'")
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: enabledCloud, object: cloud)], timeout: 5), .completed)
+        app.navigationBars.buttons["BackButton"].firstMatch.tap()
+        reveal(app.buttons["settingsPrivacy"], in: app)
+        app.buttons["settingsPrivacy"].tap()
+        XCTAssertTrue(app.staticTexts["Local photo analysis"].waitForExistence(timeout: 5))
+        let local = app.staticTexts["Local photo analysis"], uploads = app.staticTexts["No photo uploads"]
+        XCTAssertEqual(local.frame.minX, uploads.frame.minX, accuracy: 1)
+        XCTAssertGreaterThan(uploads.frame.minY - local.frame.maxY, 5)
+        capture(app, "Pearl-Privacy-Spacing")
         app.navigationBars.buttons["BackButton"].firstMatch.tap()
         app.buttons["settingsCache"].tap()
         XCTAssertTrue(app.buttons["clearAnalysisCache"].waitForExistence(timeout: 5))

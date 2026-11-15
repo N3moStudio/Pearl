@@ -1,5 +1,17 @@
 # Pearl settings adoption map
 
+## November 15 Privacy and album spacing (before edits)
+
+| Setting/action | Existing model/storage | Updated location and presentation |
+|---|---|---|
+| Three local-privacy facts | Static descriptions of the existing scanner/privacy behavior | Same Privacy > On your iPhone group; consistent icon column and internal padding |
+| Review & removal help | Existing disclosure, queue and Photos confirmation behavior | Same Privacy > Your choices; unchanged |
+| Browse albums / unfiled media / create album | PearlModel.albums, organizedIDs, real AlbumAccess/PhotoKit operations | Same Albums page, compact grouped native rows |
+| Choose or create destination album | AlbumPicker.ids and existing async save, errors and cancellation | Same picker, compact album rows with covers/counts; selection retained while organizing |
+| Favorite/reorder albums | AlbumPreferences; pearl.albums.favorites and pearl.albums.order | Existing Album order page plus an Organize albums link inside Add to album; shared immediate saved order |
+
+No storage keys, defaults, photo-favorite behavior, Photos album order, media, review decisions or active scan ownership change. Native navigation and accessibility text sizing remain. This follow-up validates source/native UI; it does not request another IPA or release.
+
 ## November 14 compact refinement (before edits)
 
 All settings/actions in the table below keep their model, storage and destination. The three Privacy > On your iPhone facts become one compact informational group, without action styling. Review & removal disclosure remains. Ordinary overview/detail rows reuse NSKRow with smaller explicit list insets and semantic subheadline text; the appearance identity card retains its larger dimensions. No theme/surface choice, default, permission action, cache gate, notice or error is removed. Scanning help says “pages” rather than the obsolete “tabs.”

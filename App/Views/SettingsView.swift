@@ -30,7 +30,7 @@ struct SettingsView: View {
                 SettingsGroup("Your data") {
                     NavigationLink { privacy } label: {
                         SettingsRow("Privacy", symbol: "hand.raised")
-                    }
+                    }.accessibilityIdentifier("settingsPrivacy")
                     NavigationLink { cache } label: {
                         SettingsRow("Analysis cache", symbol: "internaldrive")
                     }.accessibilityIdentifier("settingsCache")
@@ -126,11 +126,11 @@ struct SettingsView: View {
         NSKList {
             SettingsGroup("On your iPhone") {
                 VStack(alignment: .leading, spacing: 10) {
-                    Label("Local photo analysis", systemImage: "iphone")
-                    Label("No photo uploads", systemImage: "lock.shield")
-                    Label("No account or analytics", systemImage: "person.crop.circle.badge.checkmark")
-                }.font(.subheadline).foregroundStyle(colors.text)
-                    .fixedSize(horizontal: false, vertical: true).padding(.vertical, 4)
+                    privacyFact("Local photo analysis", symbol: "iphone")
+                    privacyFact("No photo uploads", symbol: "lock.shield")
+                    privacyFact("No account or analytics", symbol: "person.crop.circle.badge.checkmark")
+                }.padding(.vertical, 14)
+                    .accessibilityIdentifier("privacyFacts")
             }
             SettingsGroup("Your choices") {
                 SettingsHelp("Review & removal", symbol: "checkmark.shield", lines: [
@@ -139,6 +139,17 @@ struct SettingsView: View {
                 ])
             }
         }.navigationBarTitleDisplayMode(.inline).navigationTitle("Privacy")
+    }
+
+    private func privacyFact(_ title: String, symbol: String) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: symbol).resizable().scaledToFit()
+                .frame(width: 18, height: 18).frame(width: 28)
+                .foregroundStyle(colors.accent).accessibilityHidden(true)
+            Text(title).font(.subheadline).foregroundStyle(colors.text)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }.frame(minHeight: 22)
     }
 
     private var cache: some View {

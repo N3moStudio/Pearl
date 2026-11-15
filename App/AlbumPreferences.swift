@@ -41,31 +41,40 @@ import NativeSettingsKit
 }
 
 struct AlbumOrderView: View {
+    var writableOnly = false
     @Environment(PearlModel.self) private var model
+    @Environment(\.nskPalette) private var colors
     var body: some View {
         NSKList {
             albumSection("Favorites", favorites: true)
             albumSection("Other albums", favorites: false)
-            Section {
-                Text("Star albums for quick access. Drag within each group to set the order in Pearl and the Add to album picker. This doesn't change album order in Apple's Photos app.")
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
         }.environment(\.editMode, .constant(.active))
             .navigationTitle("Album order").navigationBarTitleDisplayMode(.inline)
     }
-    private func albumSection(_ title: String, favorites: Bool) -> some View {
-        let albums = model.orderedAlbums.filter { model.albumPreferences.favorites.contains($0.id) == favorites }
-        return Section(title) {
-            ForEach(albums) { album in
-                HStack {
-                    Button { model.albumPreferences.toggleFavorite(album.id) } label: {
-                        Image(systemName: favorites ? "star.fill" : "star").frame(minWidth: 44, minHeight: 44)
-                    }.buttonStyle(.borderless)
-                        .accessibilityLabel("\(favorites ? "Unfavorite" : "Favorite") album \(album.title)")
-                        .accessibilityIdentifier("favoriteAlbum")
-                    Text(album.title)
+    @ViewBuilder private func albumSection(_ title: String, favorites: Bool) -> some View {
+        let albums = model.orderedAlbums.filter { (!writableOnly || $0.canAdd) && model.albumPreferences.favorites.contains($0.id) == favorites }
+        if !albums.isEmpty || !favorites {
+            Section {
+                ForEach(albums) { album in
+                    HStack(spacing: 8) {
+                        Button { model.albumPreferences.toggleFavorite(album.id) } label: {
+                            Image(systemName: favorites ? "star.fill" : "star").frame(minWidth: 44, minHeight: 44)
+                        }.buttonStyle(.borderless)
+                            .accessibilityLabel("\(favorites ? "Unfavorite" : "Favorite") album \(album.title)")
+                            .accessibilityIdentifier("favoriteAlbum")
+                        Text(album.title).font(.subheadline).fixedSize(horizontal: false, vertical: true)
+                    }
+                }.onMove { model.albumPreferences.move(albums, in: model.albums, from: $0, to: $1) }
+            } header: {
+                Text(title).textCase(nil)
+            } footer: {
+                if !favorites {
+                    Text("Star favorites. Drag the handles to reorder each group. This order is used throughout Pearl.")
+                        .font(.footnote).foregroundStyle(colors.muted)
                 }
-            }.onMove { model.albumPreferences.move(albums, in: model.albums, from: $0, to: $1) }
+            }
+            .listRowBackground(colors.surface)
+            .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 16))
         }
     }
 }
